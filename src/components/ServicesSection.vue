@@ -1,56 +1,114 @@
 <script setup>
-import { useTemplateRef } from 'vue'
-import { useScrollReveal } from '../composables/useScrollReveal'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
+const ServiceMonolith = defineAsyncComponent({
+  loader: () => import('./3d/ServiceMonolith.vue'),
+  delay: 0,
+})
 
 const sectionRef = useTemplateRef('section')
-
-// Stagger reveal: each card fades/slides in with a short delay after the
-// previous one as the section enters the viewport.
-useScrollReveal(sectionRef, { stagger: 0.15 })
+const progress = ref(0)
+let scrollTriggerInstance = null
 
 const services = [
   {
-    title: 'Digitalisasi Proses Operasional',
-    description:
-      'Mengubah pencatatan manual dan alur kerja informal menjadi sistem digital terpusat yang bisa dipantau real-time.',
+    title: 'Konsultasi & Strategi IT',
+    description: 'Strategi transformasi digital yang selaras dengan tujuan dan proses bisnis Anda.',
+    align: 'items-start text-left justify-self-start self-start',
   },
   {
-    title: 'Sistem Monitoring & Reporting',
-    description:
-      'Dashboard operasional dengan visibilitas penuh atas proses produksi, distribusi, atau maintenance.',
+    title: 'Software Development',
+    description: 'Pengembangan software custom, web, dan mobile yang scalable dan reliable.',
+    align: 'items-end text-right justify-self-end self-start',
   },
   {
-    title: 'Integrasi Sistem Industrial',
-    description:
-      'Menghubungkan sistem legacy dengan platform digital baru tanpa overhaul total infrastruktur.',
+    title: 'Desain Produk & UX',
+    description: 'Desain produk yang berpusat pada pengguna, dari riset hingga prototype siap build.',
+    align: 'items-start text-left justify-self-start self-end',
   },
   {
-    title: 'Custom SaaS Development',
-    description:
-      'Pengembangan platform SaaS yang disesuaikan dengan kebutuhan spesifik industri klien.',
+    title: 'Cloud & Infrastruktur',
+    description: 'Arsitektur cloud, DevOps, dan integrasi sistem yang aman dan efisien.',
+    align: 'items-end text-right justify-self-end self-end',
   },
 ]
+
+const backdropWords = ['KONSULTASI', 'DEVELOPMENT', 'DESAIN', 'INFRASTRUKTUR']
+
+const revealed = computed(() => services.map((_, i) => progress.value > (i + 1) * 0.18))
+const stage = computed(() => revealed.value.filter(Boolean).length)
+
+onMounted(() => {
+  if (!sectionRef.value) return
+
+  scrollTriggerInstance = ScrollTrigger.create({
+    trigger: sectionRef.value,
+    start: 'top top',
+    end: '+=300%',
+    scrub: 1,
+    pin: true,
+    onUpdate: (self) => {
+      progress.value = self.progress
+    },
+  })
+})
+
+onBeforeUnmount(() => {
+  scrollTriggerInstance?.kill()
+})
 </script>
 
 <template>
-  <section id="services" ref="section" class="bg-brand-900 px-6 py-32">
-    <div class="mx-auto max-w-6xl">
-      <p data-reveal class="text-sm uppercase tracking-[0.3em] text-brand-accent">Layanan</p>
-      <h2 data-reveal class="mt-4 max-w-2xl font-heading text-4xl font-semibold text-white">
-        Apa yang kami kerjakan
-      </h2>
+  <section id="services" ref="section" class="relative flex h-screen items-center justify-center overflow-hidden bg-brand-950">
+    <!-- Static backdrop of the four service pillars, always dimly visible -->
+    <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 select-none">
+      <span
+        v-for="word in backdropWords"
+        :key="word"
+        class="text-display-lg leading-[0.9] text-white/[0.06]"
+      >
+        {{ word }}
+      </span>
+    </div>
 
-      <div class="mt-16 grid gap-6 sm:grid-cols-2">
-        <div
-          v-for="service in services"
-          :key="service.title"
-          data-reveal
-          class="rounded-2xl border border-white/10 bg-brand-950/40 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-brand-accent/50 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)]"
-        >
-          <h3 class="font-heading text-xl font-medium text-white">{{ service.title }}</h3>
-          <p class="mt-3 text-slate-400">{{ service.description }}</p>
-        </div>
+    <p class="text-eyebrow absolute top-28 text-white/50">Layanan Kami</p>
+
+    <!-- Centerpiece 3D monolith -->
+    <div class="pointer-events-none relative z-10 h-[280px] w-[280px] sm:h-[360px] sm:w-[360px]">
+      <Suspense>
+        <template #default>
+          <ServiceMonolith :stage="stage" />
+        </template>
+        <template #fallback>
+          <div class="flex h-full w-full items-center justify-center">
+            <div class="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-brand-accent" />
+          </div>
+        </template>
+      </Suspense>
+    </div>
+
+    <!-- Cumulative service card reveal, one per corner -->
+    <div class="pointer-events-none absolute inset-0 z-20 grid grid-cols-2 grid-rows-2 gap-6 p-6 sm:p-14 lg:p-20">
+      <div
+        v-for="(service, i) in services"
+        :key="service.title"
+        class="pointer-events-auto flex max-w-[15rem] flex-col gap-2 transition-all duration-700 ease-out sm:max-w-xs"
+        :class="[service.align, revealed[i] ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0']"
+      >
+        <h3 class="font-heading text-lg font-medium text-white sm:text-xl">{{ service.title }}</h3>
+        <p class="text-xs text-slate-400 sm:text-sm">{{ service.description }}</p>
       </div>
+    </div>
+
+    <div class="absolute inset-x-0 bottom-8 flex items-center justify-between px-6 text-white/40 sm:px-10">
+      <p class="text-xs uppercase tracking-[0.2em]">✦ Disiplin Berbeda. Standar Kualitas yang Sama.</p>
+      <a href="#work" class="hidden items-center gap-2 border-b border-white/30 pb-1 text-sm font-medium text-white/70 transition-colors hover:border-white hover:text-white sm:flex">
+        Lihat Karya Kami →
+      </a>
     </div>
   </section>
 </template>

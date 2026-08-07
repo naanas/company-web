@@ -22,7 +22,7 @@ const steps = [
   {
     number: '03',
     title: 'Development',
-    description: 'Membangun platform SaaS sesuai kebutuhan spesifik industri Anda.',
+    description: 'Membangun platform sesuai kebutuhan spesifik bisnis Anda.',
   },
   {
     number: '04',
@@ -38,11 +38,11 @@ const steps = [
 </script>
 
 <template>
-  <section id="process" ref="section" class="bg-brand-900 px-6 py-32">
+  <section id="process" ref="section" class="bg-brand-950 px-6 py-32">
     <div class="mx-auto max-w-6xl">
-      <p data-reveal class="text-sm uppercase tracking-[0.3em] text-brand-accent">Proses Kerja</p>
-      <h2 data-reveal class="mt-4 max-w-2xl font-heading text-4xl font-semibold text-white">
-        Bagaimana kami bekerja
+      <p data-reveal class="text-eyebrow text-brand-accent">Proses Kerja</p>
+      <h2 data-reveal class="text-display mt-4 max-w-2xl text-white">
+        Bagaimana Kami Bekerja
       </h2>
 
       <div class="relative mt-20">
@@ -51,7 +51,7 @@ const steps = [
         <ol class="grid gap-10 lg:grid-cols-5 lg:gap-6">
           <li v-for="step in steps" :key="step.number" data-reveal class="relative">
             <div
-              class="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border border-brand-accent/40 bg-brand-900 font-heading text-sm text-brand-accent"
+              class="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border border-brand-accent/40 bg-brand-950 font-heading text-sm text-brand-accent"
             >
               {{ step.number }}
             </div>
