@@ -1,19 +1,20 @@
 <script setup>
 /**
- * A faceted "rock" bearing the VELTECH mark — stands in for the reference
- * site's carved-stone services centerpiece. The rock is a low-poly
- * icosahedron with per-vertex noise displacement (built once as a raw
- * Three.js mesh, then dropped into the TresJS scene via <primitive>), and
- * the wordmark is a canvas-drawn texture on a plane parented to the same
- * rotating group so it reads as branding etched into one facet.
+ * A real scanned rock bearing the VELTECH mark — stands in for the reference
+ * site's carved-stone services centerpiece. The mesh is Poly Haven's
+ * "Moon Rock 01" (CC0, see public/models/veltech-rock/README.txt), loaded
+ * once via top-level await so the <Suspense> boundary in ServicesSection
+ * waits for it. The wordmark is a canvas-drawn texture on a plane parented
+ * to the same rotating group so it reads as branding etched into one facet.
  *
  * `stage` (0-4) is bumped by the parent as each service card is revealed
  * on scroll — every change plays a small scale/rotation "impact" so the
  * rock visibly reacts to the reveal instead of spinning inertly.
  */
 import { TresCanvas } from '@tresjs/core'
-import { shallowRef, watch, onMounted } from 'vue'
+import { shallowRef, watch } from 'vue'
 import * as THREE from 'three'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { gsap } from 'gsap'
 
 const props = defineProps({
@@ -21,33 +22,43 @@ const props = defineProps({
 })
 
 const groupRef = shallowRef()
-const rockObject = shallowRef(null)
-const markObject = shallowRef(null)
 
-function buildRock() {
-  const geometry = new THREE.IcosahedronGeometry(1.6, 2).toNonIndexed()
-  const position = geometry.attributes.position
-  const v = new THREE.Vector3()
+// The dev server's conditional-cache revalidation for the large binary
+// buffer intermittently comes back as an empty 204 instead of a real 200/304
+// (seen consistently for the .bin, never for the small .gltf/.jpg files) —
+// a URL modifier makes every request Three.js issues for this model
+// cache-bust, sidestepping that revalidation path entirely.
+const manager = new THREE.LoadingManager()
+manager.setURLModifier((url) => (url.includes('/models/veltech-rock/') ? `${url}?v=1` : url))
 
-  for (let i = 0; i < position.count; i++) {
-    v.fromBufferAttribute(position, i)
-    const n =
-      Math.sin(v.x * 2.1 + v.y * 1.3) * 0.12 +
-      Math.sin(v.y * 3.4 + v.z * 2.2) * 0.09 +
-      Math.sin(v.z * 1.7 + v.x * 2.6) * 0.07
-    v.multiplyScalar(1 + n)
-    position.setXYZ(i, v.x, v.y, v.z)
-  }
-  geometry.computeVertexNormals()
+// The source .gltf bundles 4 LODs as sibling nodes (all in the default
+// scene) — grab only the highest-detail one (~10k tris) so we're not
+// silently rendering all four stacked on top of each other.
+const gltf = await new GLTFLoader(manager).loadAsync('/models/veltech-rock/veltech-rock.gltf')
+let rockMesh = null
+gltf.scene.traverse((obj) => {
+  if (obj.isMesh && obj.name.includes('LOD0')) rockMesh = obj
+})
+if (!rockMesh) gltf.scene.traverse((obj) => { if (obj.isMesh && !rockMesh) rockMesh = obj })
 
-  const material = new THREE.MeshStandardMaterial({
-    color: '#1a1b1e',
-    roughness: 0.85,
-    metalness: 0.15,
-    flatShading: true,
-  })
+// Poly Haven exports at real-world scale (this rock is ~20cm across) —
+// normalize to a fixed radius so it fills the same frame as the old
+// procedural placeholder regardless of the source model's native units.
+const box = new THREE.Box3().setFromObject(rockMesh)
+const center = box.getCenter(new THREE.Vector3())
+const radius = box.getSize(new THREE.Vector3()).length() / 2
+rockMesh.geometry = rockMesh.geometry.clone()
+rockMesh.geometry.translate(-center.x, -center.y, -center.z)
+// The source model is a long, low log-like shape (X is its longest axis) —
+// stand it up on end so it reads as a monolith rather than lying flat.
+rockMesh.geometry.rotateZ(Math.PI / 2)
 
-  return new THREE.Mesh(geometry, material)
+const targetRadius = 1.7
+rockMesh.scale.setScalar(targetRadius / radius)
+
+if (rockMesh.material) {
+  rockMesh.material.roughness = 0.92
+  rockMesh.material.metalness = 0.08
 }
 
 function buildWordmark() {
@@ -72,16 +83,13 @@ function buildWordmark() {
   texture.needsUpdate = true
 
   const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false })
-  const geometry = new THREE.PlaneGeometry(2.6, 1.3)
+  const geometry = new THREE.PlaneGeometry(2.4, 1.2)
   const mesh = new THREE.Mesh(geometry, material)
-  mesh.position.set(0, 0, 1.68)
+  mesh.position.set(0, 0.1, targetRadius * 0.98)
   return mesh
 }
 
-onMounted(() => {
-  rockObject.value = buildRock()
-  markObject.value = buildWordmark()
-})
+const markObject = buildWordmark()
 
 watch(
   () => props.stage,
@@ -107,17 +115,18 @@ function onBeforeRender({ delta }) {
 </script>
 
 <template>
-  <TresCanvas :alpha="true" clear-color="transparent" @before-render="onBeforeRender">
+  <TresCanvas :alpha="true" @before-render="onBeforeRender">
     <TresPerspectiveCamera :position="[0, 0, 6]" :look-at="[0, 0, 0]" />
 
-    <TresAmbientLight :intensity="0.5" />
-    <TresDirectionalLight :position="[3, 4, 3]" :intensity="1.1" />
-    <TresPointLight :position="[-3, -1, 2]" :intensity="1.6" color="#22d3ee" />
-    <TresPointLight :position="[2, -2, -3]" :intensity="0.7" color="#3b82f6" />
+    <TresAmbientLight :intensity="0.7" />
+    <TresDirectionalLight :position="[3, 4, 3]" :intensity="2.6" />
+    <TresDirectionalLight :position="[-2, 1, -3]" :intensity="0.6" color="#8fb8ff" />
+    <TresPointLight :position="[-3, -1, 2]" :intensity="3" color="#22d3ee" />
+    <TresPointLight :position="[2, -2, -3]" :intensity="1.4" color="#3b82f6" />
 
     <TresGroup ref="groupRef">
-      <primitive v-if="rockObject" :object="rockObject" />
-      <primitive v-if="markObject" :object="markObject" />
+      <primitive :object="rockMesh" />
+      <primitive :object="markObject" />
     </TresGroup>
   </TresCanvas>
 </template>

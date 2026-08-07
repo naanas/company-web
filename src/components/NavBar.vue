@@ -1,7 +1,13 @@
 <script setup>
-import { ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const isOpen = ref(false)
+const activeHref = ref('#hero')
+const headerRef = useTemplateRef('header')
 
 const links = [
   { label: 'Tentang', href: '#about' },
@@ -10,10 +16,60 @@ const links = [
   { label: 'Proses', href: '#process' },
   { label: 'Kontak', href: '#contact' },
 ]
+
+let sectionTriggers = []
+let hideTrigger = null
+
+onMounted(() => {
+  if (!headerRef.value) return
+
+  gsap.fromTo(headerRef.value, { y: -100, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1, ease: 'power3.out', delay: 0.1 })
+
+  // Slide the bar off-screen while scrolling down past the hero, bring it
+  // back on any upward scroll — the usual "get out of the way while
+  // reading, reappear when the user wants to navigate" nav pattern.
+  hideTrigger = ScrollTrigger.create({
+    start: 'top -120',
+    end: 99999,
+    onUpdate: (self) => {
+      const goingDown = self.direction === 1
+      gsap.to(headerRef.value, {
+        y: goingDown ? -120 : 0,
+        autoAlpha: goingDown ? 0 : 1,
+        duration: 0.4,
+        ease: 'power2.out',
+        overwrite: true,
+      })
+    },
+  })
+
+  // Track which section is currently in view to highlight its nav link —
+  // '#hero' included so the logo/home state is correct before scrolling.
+  ;['#hero', ...links.map((l) => l.href)].forEach((href) => {
+    const el = document.querySelector(href)
+    if (!el) return
+    sectionTriggers.push(
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top 55%',
+        end: 'bottom 55%',
+        onToggle: (self) => {
+          if (self.isActive) activeHref.value = href
+        },
+      })
+    )
+  })
+})
+
+onBeforeUnmount(() => {
+  hideTrigger?.kill()
+  sectionTriggers.forEach((t) => t.kill())
+  sectionTriggers = []
+})
 </script>
 
 <template>
-  <header class="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 sm:pt-6">
+  <header ref="header" class="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 sm:pt-6">
     <nav
       class="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-white/10 bg-brand-950/60 px-4 py-2.5 backdrop-blur-md sm:px-6"
     >
@@ -26,7 +82,11 @@ const links = [
 
       <ul class="hidden items-center gap-8 md:flex">
         <li v-for="link in links" :key="link.href">
-          <a :href="link.href" class="text-sm text-white/70 transition hover:text-white">
+          <a
+            :href="link.href"
+            class="text-sm transition-colors"
+            :class="activeHref === link.href ? 'text-white' : 'text-white/70 hover:text-white'"
+          >
             {{ link.label }}
           </a>
         </li>
@@ -57,7 +117,8 @@ const links = [
       <li v-for="link in links" :key="link.href">
         <a
           :href="link.href"
-          class="block py-2 text-sm text-white/70 transition hover:text-white"
+          class="block py-2 text-sm transition-colors"
+          :class="activeHref === link.href ? 'text-white' : 'text-white/70 hover:text-white'"
           @click="isOpen = false"
         >
           {{ link.label }}

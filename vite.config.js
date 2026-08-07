@@ -13,7 +13,10 @@ export default defineConfig({
           // TresCanvas is a real component (imported from @tresjs/core) and
           // must still go through normal resolution — only the elements
           // TresJS maps onto Three.js classes internally are custom tags.
-          isCustomElement: (tag) => tag.startsWith('Tres') && tag !== 'TresCanvas',
+          // `primitive` is TresJS's own escape hatch for dropping a raw
+          // Three.js object (built outside the declarative tree) into the
+          // scene, e.g. ServiceMonolith's procedurally-built rock mesh.
+          isCustomElement: (tag) => (tag.startsWith('Tres') && tag !== 'TresCanvas') || tag === 'primitive',
         },
       },
     }),

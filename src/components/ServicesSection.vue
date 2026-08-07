@@ -11,8 +11,10 @@ const ServiceMonolith = defineAsyncComponent({
 })
 
 const sectionRef = useTemplateRef('section')
+const curtainRef = useTemplateRef('curtain')
 const progress = ref(0)
 let scrollTriggerInstance = null
+let curtainTriggerInstance = null
 
 const services = [
   {
@@ -55,10 +57,33 @@ onMounted(() => {
       progress.value = self.progress
     },
   })
+
+  // One-shot curtain wipe that plays right as the section locks into its
+  // pin, independent of the scrubbed 300% stage reveal above — gives the
+  // section a distinct "arriving on stage" beat instead of just snapping
+  // into its pinned position.
+  if (curtainRef.value) {
+    const tween = gsap.fromTo(
+      curtainRef.value,
+      { clipPath: 'inset(0% 0% 0% 0%)' },
+      {
+        clipPath: 'inset(0% 0% 100% 0%)',
+        duration: 1,
+        ease: 'power4.inOut',
+        scrollTrigger: {
+          trigger: sectionRef.value,
+          start: 'top top',
+          toggleActions: 'play none none reverse',
+        },
+      }
+    )
+    curtainTriggerInstance = tween.scrollTrigger
+  }
 })
 
 onBeforeUnmount(() => {
   scrollTriggerInstance?.kill()
+  curtainTriggerInstance?.kill()
 })
 </script>
 
@@ -110,5 +135,8 @@ onBeforeUnmount(() => {
         Lihat Karya Kami →
       </a>
     </div>
+
+    <!-- Curtain wipe played once as the section pins into place -->
+    <div ref="curtain" class="pointer-events-none absolute inset-0 z-30 bg-brand-950" />
   </section>
 </template>

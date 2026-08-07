@@ -1,16 +1,45 @@
 <script setup>
-import { defineAsyncComponent, useTemplateRef } from 'vue'
-import { useScrollReveal } from '../composables/useScrollReveal'
+import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import NeuralNetworkBackground from './NeuralNetworkBackground.vue'
 
-// Lazy-loaded: Three.js/TresJS and its dependencies only load once this
-// component mounts, keeping them out of the initial bundle.
-const HeroScene = defineAsyncComponent({
-  loader: () => import('./3d/HeroScene.vue'),
-  delay: 0,
-})
+gsap.registerPlugin(ScrollTrigger)
 
 const sectionRef = useTemplateRef('section')
-useScrollReveal(sectionRef, { start: 'top 95%', duration: 1.1 })
+let pinTrigger = null
+
+// The hero is always visible on load, so its entrance plays as a plain
+// on-mount timeline rather than a ScrollTrigger reveal — scroll-linked
+// triggers here would be racing the initial layout (webfonts swapping in,
+// the pinned services section inserting its spacer) for no visual benefit,
+// since the section is already on screen either way.
+onMounted(() => {
+  if (!sectionRef.value) return
+  const targets = sectionRef.value.querySelectorAll('[data-reveal]')
+  gsap.fromTo(
+    targets,
+    { autoAlpha: 0, y: 40 },
+    { autoAlpha: 1, y: 0, duration: 1.1, stagger: 0.12, ease: 'power3.out', delay: 0.2 }
+  )
+
+  // `pinSpacing: false` is what makes this a reveal instead of a plain pin —
+  // no spacer is added to preserve the hero's document-flow height, so once
+  // it locks in place the sections behind it keep scrolling normally and
+  // slide up over it like a curtain, exactly for the length of its own
+  // height (`end: bottom top`) before releasing.
+  pinTrigger = ScrollTrigger.create({
+    trigger: sectionRef.value,
+    start: 'top top',
+    end: 'bottom top',
+    pin: true,
+    pinSpacing: false,
+  })
+})
+
+onBeforeUnmount(() => {
+  pinTrigger?.kill()
+})
 </script>
 
 <template>
@@ -19,27 +48,9 @@ useScrollReveal(sectionRef, { start: 'top 95%', duration: 1.1 })
     ref="section"
     class="relative flex min-h-screen items-center overflow-hidden bg-brand-950 pt-24"
   >
-    <!-- Faint drifting line grid, standing in for the reference site's
-         particle/line canvas without the cost of a full particle system -->
-    <div
-      class="pointer-events-none absolute inset-0 opacity-[0.15]"
-      style="background-image: linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px); background-size: 64px 64px;"
-    />
+    <!-- Interactive neural-network backdrop, its nodes seeded into a "V" -->
+    <NeuralNetworkBackground class="opacity-70" />
     <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-950" />
-
-    <!-- Interactive 3D crystal, centered-right like the reference hero object -->
-    <div class="pointer-events-auto absolute right-[5%] top-1/2 h-[380px] w-[380px] -translate-y-1/2 sm:h-[460px] sm:w-[460px] lg:h-[560px] lg:w-[560px]">
-      <Suspense>
-        <template #default>
-          <HeroScene />
-        </template>
-        <template #fallback>
-          <div class="flex h-full w-full items-center justify-center">
-            <div class="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-brand-accent" />
-          </div>
-        </template>
-      </Suspense>
-    </div>
 
     <!-- Floating "key fact" card, top-right -->
     <div data-reveal class="absolute right-6 top-28 hidden max-w-[220px] flex-col gap-3 text-right sm:right-10 sm:top-32 md:flex">
@@ -92,7 +103,7 @@ useScrollReveal(sectionRef, { start: 'top 95%', duration: 1.1 })
         ↓
       </a>
       <p class="hidden text-center text-xs uppercase tracking-[0.25em] sm:block">
-        Tarik untuk memutar ✦ jelajahi ↓
+        Gerakkan kursor ✦ jelajahi ↓
       </p>
       <span class="w-10" />
     </div>

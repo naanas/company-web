@@ -1,17 +1,15 @@
 import { onMounted, onBeforeUnmount } from 'vue'
-import { gsap } from 'gsap'
-import { ScrollToPlugin } from 'gsap/ScrollToPlugin'
-
-gsap.registerPlugin(ScrollToPlugin)
+import { lenisScrollTo } from './useLenis'
 
 const NAV_OFFSET = 76
 
 /**
  * Intercepts clicks on same-page `#anchor` links and animates the scroll
- * with GSAP instead of an instant jump, offsetting for the fixed navbar.
- * Works alongside ScrollTrigger — it only tweens window scroll position,
- * which ScrollTrigger already listens to, so pinned/scrubbed sections
- * (e.g. the Hero video) stay in sync automatically.
+ * through the shared Lenis instance instead of an instant jump, offsetting
+ * for the fixed navbar. Deliberately does NOT use GSAP's ScrollToPlugin —
+ * Lenis owns the scroll position once it's active, so a second tween
+ * driving `window.scrollTo` underneath it would fight Lenis's own easing
+ * and produce a stutter instead of a single smooth motion.
  */
 export function useSmoothAnchorScroll() {
   function onClick(event) {
@@ -25,11 +23,7 @@ export function useSmoothAnchorScroll() {
     if (!target) return
 
     event.preventDefault()
-    gsap.to(window, {
-      duration: 1.1,
-      ease: 'power2.inOut',
-      scrollTo: { y: target, offsetY: NAV_OFFSET },
-    })
+    lenisScrollTo(target, { offset: -NAV_OFFSET, duration: 1.4, easing: (t) => 1 - Math.pow(1 - t, 3) })
   }
 
   onMounted(() => document.addEventListener('click', onClick))
