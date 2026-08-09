@@ -1,13 +1,44 @@
 <script setup>
-import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
+import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import NeuralNetworkBackground from './NeuralNetworkBackground.vue'
-
-gsap.registerPlugin(ScrollTrigger)
+import { useInteractiveLineField } from '../composables/useInteractiveLineField'
+import { useScrollZoom } from '../composables/useScrollZoom'
 
 const sectionRef = useTemplateRef('section')
-let pinTrigger = null
+const lineCanvasRef = useTemplateRef('lineCanvas')
+const bgVideoRef = useTemplateRef('bgVideo')
+const zoomImageRef = useTemplateRef('zoomImage')
+
+// Passive "touch the lines" cursor-bend effect stays active in the
+// background — only the hold-to-blast hotspot (and its label) was removed.
+useInteractiveLineField(lineCanvasRef, sectionRef)
+
+// Same two elements/two tweens as codepen.io/GreenSock/pen/YzbPYMx: the
+// `.image-container img` role (scale 2 + z 350, the dramatic zoom) is
+// `zoomImage` (public/images/BGHTML.png, the same asset type as the
+// reference's photo), and the `.section.hero` background role (scale 1.1)
+// is `bgVideo` (the veltechlogo animation) — see useScrollZoom.js.
+useScrollZoom(zoomImageRef, bgVideoRef, sectionRef)
+
+// Rotating headline word, swapped on a timer with a glitch transition (see
+// the `word-glitch` keyframes below) — echoes the obscured/blurred word in
+// the reference layout, but as an actual cycling word rather than a static
+// blur, with a glitchy cut between words instead of a plain crossfade.
+const words = ['purpose', 'depth', 'something', 'impact', 'intention']
+const wordIndex = ref(0)
+let wordInterval = null
+
+// Chrome pauses silent, video-only background media as a power-saving
+// measure ("video-only background media was paused to save power") — it
+// can hit an autoplaying, audio-less loop like this one even while the tab
+// is genuinely in view. Resuming on 'pause' (only while the page is
+// actually visible, so it doesn't fight a deliberate background-tab pause)
+// makes the loop self-heal instead of freezing on one frame.
+function resumeBgVideo() {
+  if (document.visibilityState === 'visible') {
+    bgVideoRef.value?.play().catch(() => {})
+  }
+}
 
 // The hero is always visible on load, so its entrance plays as a plain
 // on-mount timeline rather than a ScrollTrigger reveal — scroll-linked
@@ -23,22 +54,22 @@ onMounted(() => {
     { autoAlpha: 1, y: 0, duration: 1.1, stagger: 0.12, ease: 'power3.out', delay: 0.2 }
   )
 
-  // `pinSpacing: false` is what makes this a reveal instead of a plain pin —
-  // no spacer is added to preserve the hero's document-flow height, so once
-  // it locks in place the sections behind it keep scrolling normally and
-  // slide up over it like a curtain, exactly for the length of its own
-  // height (`end: bottom top`) before releasing.
-  pinTrigger = ScrollTrigger.create({
-    trigger: sectionRef.value,
-    start: 'top top',
-    end: 'bottom top',
-    pin: true,
-    pinSpacing: false,
-  })
+  wordInterval = setInterval(() => {
+    wordIndex.value = (wordIndex.value + 1) % words.length
+  }, 2600)
+
+  // The `autoplay` attribute alone is unreliable — some browsers/embed
+  // contexts silently never start loading the video without an explicit
+  // play() call, leaving it stuck paused at frame 0 indefinitely. Calling
+  // it directly is the robust way to kick off autoplay; `muted` is what
+  // makes browsers allow it without a user gesture.
+  bgVideoRef.value?.play().catch(() => {})
+  bgVideoRef.value?.addEventListener('pause', resumeBgVideo)
 })
 
 onBeforeUnmount(() => {
-  pinTrigger?.kill()
+  clearInterval(wordInterval)
+  bgVideoRef.value?.removeEventListener('pause', resumeBgVideo)
 })
 </script>
 
@@ -46,66 +77,156 @@ onBeforeUnmount(() => {
   <section
     id="hero"
     ref="section"
-    class="relative flex min-h-screen items-center overflow-hidden bg-brand-950 pt-24"
+    class="relative flex min-h-screen items-start overflow-hidden bg-brand-950 pt-36 sm:pt-40"
   >
-    <!-- Interactive neural-network backdrop, its nodes seeded into a "V" -->
-    <NeuralNetworkBackground class="opacity-70" />
-    <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-950" />
-
-    <!-- Floating "key fact" card, top-right -->
-    <div data-reveal class="absolute right-6 top-28 hidden max-w-[220px] flex-col gap-3 text-right sm:right-10 sm:top-32 md:flex">
-      <div class="ml-auto flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 backdrop-blur-sm">
-        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 text-brand-accent">
-          ✦
-        </span>
-        <span class="text-left text-[0.7rem] uppercase leading-snug tracking-wider text-white/70">
-          X+ Tahun<br />Membangun Arah Digital
-        </span>
-      </div>
-      <p class="text-sm leading-relaxed text-white/50">
-        Website, aplikasi, sistem, dan platform yang dibangun untuk kejelasan, skala, dan dampak.
-      </p>
+    <!-- `.content .section.hero` from the reference — background layer,
+         normal flow, gets the timeline's scale:1.1 tween. `mix-blend-mode:
+         screen` drops the video's black background out entirely so only
+         the bright mark shows against the section's own bg-brand-950. -->
+    <div class="absolute inset-0 z-[1] overflow-hidden">
+      <video
+        ref="bgVideo"
+        class="pointer-events-none h-full w-full object-cover object-center mix-blend-screen"
+        :src="'/videos/veltechlogo.mp4'"
+        autoplay
+        muted
+        loop
+        playsinline
+      />
     </div>
 
-    <div class="relative z-10 mx-auto w-full max-w-6xl px-6">
+    <!-- `.image-container > img` from the reference — its own absolute box
+         with `perspective: 500px`, gets the timeline's scale:2 + z:350
+         tween (the dramatic zoom). -->
+    <div class="absolute inset-x-0 top-0 z-[2] h-full overflow-hidden [perspective:500px]">
+      <img
+        ref="zoomImage"
+        class="pointer-events-none h-full w-full object-cover object-center"
+        :src="'/images/BGHTML.png'"
+        alt=""
+      />
+    </div>
+
+    <!-- Touchable line field: bends away from the cursor (see useInteractiveLineField.js) -->
+    <canvas ref="lineCanvas" class="pointer-events-none absolute inset-0 z-[3]" />
+
+    <div class="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-r from-brand-950 via-brand-950/60 to-transparent" />
+    <div class="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-transparent via-transparent to-brand-950" />
+
+    <div class="relative z-10 w-full px-6 sm:px-10">
       <p data-reveal class="text-eyebrow text-brand-accent">PT Veltera Digital Technologies</p>
 
-      <h1 data-reveal class="text-display-lg mt-4 max-w-3xl text-white">
-        Teknologi yang<br />
-        <span class="text-white/40">Berarti.</span>
+      <h1
+        data-reveal
+        class="mt-4 max-w-xl font-heading text-[clamp(2.25rem,5.5vw,4.5rem)] font-semibold leading-[0.95] tracking-[-0.01em] text-white"
+      >
+        Designed to<br />
+        mean
+        <Transition name="word-glitch" mode="out-in">
+          <span :key="words[wordIndex]" class="inline-block text-white/40 blur-sm select-none">{{ words[wordIndex] }}</span>
+        </Transition>
       </h1>
 
-      <p data-reveal class="mt-6 max-w-lg text-base text-slate-400 sm:text-lg">
-        VELTECH adalah konsultan IT, digital agency, dan software house yang membangun
-        website, aplikasi, dan sistem custom — dirancang untuk kejelasan, dibangun untuk skala.
-      </p>
-
-      <div data-reveal class="mt-10 flex flex-wrap items-center gap-6">
-        <a
-          href="#contact"
-          class="rounded-full bg-brand-accent px-7 py-3.5 text-sm font-medium text-brand-950 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(34,211,238,0.45)]"
-        >
-          Mulai Proyek
-        </a>
-        <a
-          href="#services"
-          class="group flex items-center gap-2 border-b border-white/30 pb-1 text-sm font-medium text-white/80 transition-colors hover:border-white hover:text-white"
-        >
-          Lihat Layanan
-          <span class="transition-transform group-hover:translate-x-1">→</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Bottom hint row -->
-    <div class="absolute inset-x-0 bottom-8 flex items-center justify-between px-6 text-white/40 sm:px-10">
-      <a href="#about" aria-label="Scroll ke bawah" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 transition hover:border-white/40 hover:text-white">
-        ↓
+      <a
+        data-reveal
+        href="#contact"
+        class="group mt-8 inline-flex items-center gap-2 border-b border-white/30 pb-1 text-sm uppercase tracking-[0.15em] text-white/80 transition-colors hover:border-brand-accent hover:text-white"
+      >
+        Mulai Proyek
+        <span class="transition-transform group-hover:translate-x-1">→</span>
       </a>
-      <p class="hidden text-center text-xs uppercase tracking-[0.25em] sm:block">
-        Gerakkan kursor ✦ jelajahi ↓
-      </p>
-      <span class="w-10" />
     </div>
+
+    <!-- Company blurb, bottom-right -->
+    <p data-reveal class="absolute bottom-24 right-6 hidden max-w-xs text-right text-sm leading-relaxed text-white/50 sm:right-10 sm:bottom-28 md:block">
+      VELTECH adalah konsultan IT, digital agency, dan software house yang membangun
+      website, aplikasi, dan sistem custom — dirancang untuk kejelasan, dibangun untuk skala.
+    </p>
+
+    <!-- Scroll hint, bottom-left -->
+    <a
+      href="#about"
+      aria-label="Scroll ke bawah"
+      class="absolute bottom-8 left-6 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/40 transition hover:border-white/40 hover:text-white sm:left-10"
+    >
+      ↓
+    </a>
   </section>
 </template>
+
+<style scoped>
+.word-glitch-enter-active {
+  animation: word-glitch-in 0.4s steps(2, end);
+}
+.word-glitch-leave-active {
+  animation: word-glitch-out 0.28s steps(2, end);
+}
+
+@keyframes word-glitch-in {
+  0% {
+    opacity: 0;
+    filter: blur(2px);
+    transform: translate(8px, 0);
+    clip-path: inset(0 0 55% 0);
+    text-shadow:
+      -3px 0 #ff2965,
+      3px 0 #22d3ee;
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-6px, 0);
+    clip-path: inset(45% 0 8% 0);
+  }
+  40% {
+    transform: translate(5px, 0);
+    clip-path: inset(8% 0 50% 0);
+    text-shadow:
+      2px 0 #ff2965,
+      -2px 0 #22d3ee;
+  }
+  60% {
+    transform: translate(-4px, 0);
+    clip-path: inset(60% 0 4% 0);
+  }
+  80% {
+    transform: translate(2px, 0);
+    clip-path: inset(0 0 0 0);
+    text-shadow:
+      -1px 0 #ff2965,
+      1px 0 #22d3ee;
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+    filter: blur(4px);
+    clip-path: inset(0 0 0 0);
+    text-shadow: none;
+  }
+}
+
+@keyframes word-glitch-out {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
+    clip-path: inset(0 0 0 0);
+    text-shadow: none;
+  }
+  35% {
+    transform: translate(-5px, 0);
+    clip-path: inset(20% 0 30% 0);
+    text-shadow:
+      -3px 0 #ff2965,
+      3px 0 #22d3ee;
+  }
+  65% {
+    transform: translate(6px, 0);
+    clip-path: inset(55% 0 5% 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(0, 0);
+    filter: blur(6px);
+    clip-path: inset(0 0 70% 0);
+  }
+}
+</style>

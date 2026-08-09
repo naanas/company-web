@@ -1,9 +1,35 @@
 <script setup>
-import { useTemplateRef } from 'vue'
+import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useScrollReveal } from '../composables/useScrollReveal'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const sectionRef = useTemplateRef('section')
 useScrollReveal(sectionRef, { stagger: 0.12 })
+
+let pinTrigger = null
+
+// `pinSpacing: false` pins this section in place while WorkSection keeps
+// scrolling normally and slides up over it like a curtain. Duration is
+// pinned to a full viewport height rather than the section's own (variable)
+// content height, so the transition reads consistently regardless of
+// stat/partner count.
+onMounted(() => {
+  if (!sectionRef.value) return
+  pinTrigger = ScrollTrigger.create({
+    trigger: sectionRef.value,
+    start: 'top top',
+    end: '+=100%',
+    pin: true,
+    pinSpacing: false,
+  })
+})
+
+onBeforeUnmount(() => {
+  pinTrigger?.kill()
+})
 
 // Placeholder figures — swap for real numbers, then wire each value up to
 // `useCountUp(elRef, { value })` for the same animated count-up trionn uses.
@@ -17,7 +43,7 @@ const partners = ['Mitra Satu', 'Mitra Dua', 'Mitra Tiga', 'Mitra Empat', 'Mitra
 </script>
 
 <template>
-  <section id="stats" ref="section" class="bg-paper-100 px-6 py-32 text-paper-ink">
+  <section id="stats" ref="section" class="relative bg-paper-100 px-6 py-32 text-paper-ink">
     <div class="mx-auto max-w-6xl">
       <div class="text-center">
         <p data-reveal class="text-eyebrow text-paper-muted">Fakta Singkat</p>

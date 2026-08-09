@@ -38,18 +38,6 @@ body {
   color: #fff;
 }
 
-/* Native cursor is replaced by CursorFollower.vue, which only mounts under
-   this same `pointer: fine` condition — keeping the query in lockstep means
-   a touch/trackpad-only device never ends up with no visible cursor at all. */
-@media (pointer: fine) {
-  a,
-  button,
-  input,
-  textarea {
-    cursor: none;
-  }
-}
-
 /* Fluid giant display type, used for the oversized stacked headlines
    (hero, marquee, services). clamp() keeps it from overflowing on mobile
    without needing per-breakpoint overrides everywhere it's used. */

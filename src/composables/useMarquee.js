@@ -3,7 +3,7 @@ import { gsap } from 'gsap'
 
 /**
  * Infinite horizontal marquee. Expects `trackRef` to contain the marquee
- * content duplicated twice as siblings (see MarqueeSection.vue) — the tween
+ * content duplicated twice as siblings (see AboutSection.vue) — the tween
  * simply slides the whole track left by one copy's width, then snaps back
  * to 0, which reads as a seamless loop.
  */

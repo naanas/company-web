@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400">
+  <defs>
+    <linearGradient id="ai-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#042f26"/>
+      <stop offset="100%" stop-color="#03080a"/>
+    </linearGradient>
+    <linearGradient id="ai-line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2dd4bf"/>
+      <stop offset="100%" stop-color="#5eead4"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#ai-bg)"/>
+
+  <!-- neural network nodes -->
+  <g stroke="#5eead4" stroke-opacity="0.35">
+    <line x1="90" y1="90" x2="230" y2="140"/>
+    <line x1="90" y1="160" x2="230" y2="140"/>
+    <line x1="90" y1="230" x2="230" y2="140"/>
+    <line x1="90" y1="90" x2="230" y2="230"/>
+    <line x1="90" y1="160" x2="230" y2="230"/>
+    <line x1="90" y1="230" x2="230" y2="230"/>
+    <line x1="230" y1="140" x2="360" y2="180"/>
+    <line x1="230" y1="230" x2="360" y2="180"/>
+    <line x1="230" y1="140" x2="360" y2="90"/>
+    <line x1="230" y1="230" x2="360" y2="90"/>
+  </g>
+  <g fill="#2dd4bf">
+    <circle cx="90" cy="90" r="7"/>
+    <circle cx="90" cy="160" r="7"/>
+    <circle cx="90" cy="230" r="7"/>
+    <circle cx="230" cy="140" r="8" opacity="0.9"/>
+    <circle cx="230" cy="230" r="8" opacity="0.9"/>
+    <circle cx="360" cy="90" r="9"/>
+    <circle cx="360" cy="180" r="9"/>
+  </g>
+
+  <!-- dashboard panel -->
+  <rect x="420" y="70" width="180" height="260" rx="14" fill="#ffffff" opacity="0.05" stroke="#ffffff" stroke-opacity="0.1"/>
+  <rect x="440" y="90" width="90" height="10" rx="5" fill="#ffffff" opacity="0.3"/>
+
+  <!-- line chart -->
+  <polyline points="440,220 470,200 500,230 530,170 560,190 580,150" fill="none" stroke="url(#ai-line)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#5eead4">
+    <circle cx="440" cy="220" r="4"/>
+    <circle cx="470" cy="200" r="4"/>
+    <circle cx="500" cy="230" r="4"/>
+    <circle cx="530" cy="170" r="4"/>
+    <circle cx="560" cy="190" r="4"/>
+    <circle cx="580" cy="150" r="4"/>
+  </g>
+  <line x1="440" y1="250" x2="580" y2="250" stroke="#ffffff" stroke-opacity="0.1"/>
+
+  <rect x="440" y="270" width="60" height="8" rx="4" fill="#ffffff" opacity="0.15"/>
+  <rect x="440" y="286" width="140" height="20" rx="6" fill="#2dd4bf" opacity="0.5"/>
+
+  <!-- bottom readout -->
+  <rect x="60" y="300" width="300" height="14" rx="7" fill="#ffffff" opacity="0.12"/>
+  <rect x="60" y="322" width="200" height="10" rx="5" fill="#ffffff" opacity="0.08"/>
+</svg>
