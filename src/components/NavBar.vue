@@ -10,11 +10,11 @@ const activeHref = ref('#hero')
 const headerRef = useTemplateRef('header')
 
 const links = [
-  { label: 'Tentang', href: '#about' },
-  { label: 'Layanan', href: '#services' },
-  { label: 'Karya', href: '#work' },
-  { label: 'Proses', href: '#process' },
-  { label: 'Kontak', href: '#contact' },
+  { label: 'About', href: '#about' },
+  { label: 'Services', href: '#services' },
+  { label: 'Our Clients', href: '#work' },
+  { label: 'Process', href: '#process' },
+  { label: 'Contact', href: '#contact' },
 ]
 
 let sectionTriggers = []
