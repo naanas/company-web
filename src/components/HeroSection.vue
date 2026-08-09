@@ -15,9 +15,14 @@ useInteractiveLineField(lineCanvasRef, sectionRef)
 
 // Same two elements/two tweens as codepen.io/GreenSock/pen/YzbPYMx: the
 // `.image-container img` role (scale 2 + z 350, the dramatic zoom) is
-// `zoomImage` (public/images/BGHTML.png, the same asset type as the
-// reference's photo), and the `.section.hero` background role (scale 1.1)
-// is `bgVideo` (the veltechlogo animation) — see useScrollZoom.js.
+// `zoomImage` (BGHTML.png — its window is now cut out transparent in the
+// source file), and the `.section.hero` background role (scale 1.1) is
+// `bgVideo`, sitting behind it at the same position/size so the animation
+// shows straight through the window. The two roles scale at different
+// rates/timing on purpose — that mismatch is what reads as perspective:
+// the foreground frame zooms in hard while the video behind it drifts at
+// its own slower pace, the same depth cue the reference gets from photo
+// vs. mountain background. See useScrollZoom.js.
 useScrollZoom(zoomImageRef, bgVideoRef, sectionRef)
 
 // Rotating headline word, swapped on a timer with a glitch transition (see
@@ -27,6 +32,7 @@ useScrollZoom(zoomImageRef, bgVideoRef, sectionRef)
 const words = ['purpose', 'depth', 'something', 'impact', 'intention']
 const wordIndex = ref(0)
 let wordInterval = null
+let stopBgVideo = null
 
 // Chrome pauses silent, video-only background media as a power-saving
 // measure ("video-only background media was paused to save power") — it
@@ -34,10 +40,15 @@ let wordInterval = null
 // is genuinely in view. Resuming on 'pause' (only while the page is
 // actually visible, so it doesn't fight a deliberate background-tab pause)
 // makes the loop self-heal instead of freezing on one frame.
-function resumeBgVideo() {
-  if (document.visibilityState === 'visible') {
-    bgVideoRef.value?.play().catch(() => {})
+function keepPlaying(videoRef) {
+  const video = videoRef.value
+  if (!video) return
+  const resume = () => {
+    if (document.visibilityState === 'visible') video.play().catch(() => {})
   }
+  resume()
+  video.addEventListener('pause', resume)
+  return () => video.removeEventListener('pause', resume)
 }
 
 // The hero is always visible on load, so its entrance plays as a plain
@@ -63,13 +74,12 @@ onMounted(() => {
   // play() call, leaving it stuck paused at frame 0 indefinitely. Calling
   // it directly is the robust way to kick off autoplay; `muted` is what
   // makes browsers allow it without a user gesture.
-  bgVideoRef.value?.play().catch(() => {})
-  bgVideoRef.value?.addEventListener('pause', resumeBgVideo)
+  stopBgVideo = keepPlaying(bgVideoRef)
 })
 
 onBeforeUnmount(() => {
   clearInterval(wordInterval)
-  bgVideoRef.value?.removeEventListener('pause', resumeBgVideo)
+  stopBgVideo?.()
 })
 </script>
 
@@ -80,13 +90,12 @@ onBeforeUnmount(() => {
     class="relative flex min-h-screen items-start overflow-hidden bg-brand-950 pt-36 sm:pt-40"
   >
     <!-- `.content .section.hero` from the reference — background layer,
-         normal flow, gets the timeline's scale:1.1 tween. `mix-blend-mode:
-         screen` drops the video's black background out entirely so only
-         the bright mark shows against the section's own bg-brand-950. -->
+         normal flow, gets the timeline's scale:1.1 tween. Same box/sizing as
+         the photo layer below so it lines up behind the window. -->
     <div class="absolute inset-0 z-[1] overflow-hidden">
       <video
         ref="bgVideo"
-        class="pointer-events-none h-full w-full object-cover object-center mix-blend-screen"
+        class="pointer-events-none h-full w-full object-cover object-center"
         :src="'/videos/veltechlogo.mp4'"
         autoplay
         muted
@@ -97,7 +106,8 @@ onBeforeUnmount(() => {
 
     <!-- `.image-container > img` from the reference — its own absolute box
          with `perspective: 500px`, gets the timeline's scale:2 + z:350
-         tween (the dramatic zoom). -->
+         tween (the dramatic zoom). BGHTML.png's window is cut out
+         transparent, so bgVideo shows straight through it. -->
     <div class="absolute inset-x-0 top-0 z-[2] h-full overflow-hidden [perspective:500px]">
       <img
         ref="zoomImage"
