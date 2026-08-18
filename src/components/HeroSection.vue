@@ -56,18 +56,22 @@ onBeforeUnmount(() => {
     ref="section"
     class="relative flex min-h-screen items-start overflow-hidden bg-brand-950 pt-36 sm:pt-40"
   >
-    <!-- Darkens only the text column on the left for legibility; fades out
-         well before the cluster's territory so the V itself stays clear. -->
-    <div class="pointer-events-none absolute inset-0 z-[3] [background:linear-gradient(to_right,var(--color-brand-950)_0%,var(--color-brand-950)_32%,transparent_58%)]" />
+    <!-- Darkens only the text column on the left for legibility on the
+         desktop side-by-side layout; fades out well before the cluster's
+         territory so the V itself stays clear. Skipped on mobile, where
+         the V sits in its own row below the text instead of beside it. -->
+    <div class="pointer-events-none absolute inset-0 z-[3] hidden sm:block sm:[background:linear-gradient(to_right,var(--color-brand-950)_0%,var(--color-brand-950)_32%,transparent_58%)]" />
     <div class="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-transparent via-transparent to-brand-950" />
 
     <!-- Dark-cluster V: a spinning cluster of shards forming a V — the
-         hero's centerpiece, replacing the old background video. Hidden on
-         mobile — a continuous WebGPU render loop isn't worth it on small
-         screens/weaker GPUs for what's a purely decorative object there. -->
+         hero's centerpiece, replacing the old background video. Stacked
+         below the headline (full-width) on mobile instead of the desktop
+         side-overlay layout; useDarkClusterV caps pixel ratio tighter on
+         narrow viewports and still self-hides if WebGPU is unsupported, so
+         showing it here doesn't risk a broken canvas on weaker phones. -->
     <div
       ref="clusterContainer"
-      class="absolute top-24 bottom-0 right-[6%] z-[2] hidden w-[58vw] max-w-[760px] sm:block sm:top-28"
+      class="absolute left-4 right-4 top-[22rem] bottom-24 z-[2] sm:left-auto sm:right-[6%] sm:top-28 sm:bottom-0 sm:w-[58vw] sm:max-w-[760px]"
     >
       <canvas ref="clusterCanvas" class="h-full w-full" />
     </div>

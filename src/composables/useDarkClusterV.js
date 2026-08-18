@@ -249,7 +249,10 @@ export function useDarkClusterV(canvasRef, containerRef) {
     if (!containerRef.value || !renderer || !camera) return
     const { clientWidth: w, clientHeight: h } = containerRef.value
     if (!w || !h) return
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    // The Sobel + Bayer post-process pass costs scale with pixel count, so
+    // narrow (likely weaker-GPU) viewports get a tighter cap than desktop.
+    const dprCap = window.innerWidth < 640 ? 1.5 : 2
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap))
     renderer.setSize(w, h, false)
     camera.aspect = w / h
     camera.updateProjectionMatrix()
