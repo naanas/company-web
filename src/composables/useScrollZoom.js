@@ -5,16 +5,14 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 gsap.registerPlugin(ScrollTrigger)
 
 /**
- * Pins `triggerRef` and runs the exact two-tween GSAP timeline from
- * codepen.io/GreenSock/pen/YzbPYMx: `zoomRef` (their `.image-container img`)
- * scales to 2 and pushes forward in Z, while `bgRef` (their `.section.hero`
- * background) scales to 1.1 at the same time ("<").
+ * Pins `triggerRef` and scales `zoomRef` up while scrolling through it — a
+ * slow scroll-driven zoom (optionally paired with a second `bgRef` layer
+ * scaling at a different rate for a parallax feel, if one is passed).
  *
- * Branches via `gsap.matchMedia()` rather than one shared config: the full
- * scale:2/z:350 push and a 150%-viewport pin read as dramatic depth on
- * desktop, but on mobile that same long pin plus a hard perspective push is
- * mostly jank (weaker GPUs, address-bar resize jitter) for a cue smaller
- * screens don't read as clearly anyway.
+ * Branches via `gsap.matchMedia()` rather than one shared config: a full
+ * 150%-viewport pin with a strong zoom reads as dramatic depth on desktop,
+ * but on mobile that same long pin is mostly jank (weaker GPUs, address-bar
+ * resize jitter) for a cue smaller screens don't read as clearly anyway.
  */
 export function useScrollZoom(zoomRef, bgRef, triggerRef) {
   let matchMedia = null
@@ -37,13 +35,12 @@ export function useScrollZoom(zoomRef, bgRef, triggerRef) {
       })
 
       timeline.to(zoomRef.value, {
-        scale: isMobile ? 1.35 : 2,
-        z: isMobile ? 0 : 350,
+        scale: isMobile ? 1.08 : 1.18,
         transformOrigin: 'center center',
         ease: 'power1.inOut',
       })
 
-      if (bgRef.value) {
+      if (bgRef?.value) {
         timeline.to(
           bgRef.value,
           {

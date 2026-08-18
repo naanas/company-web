@@ -3,27 +3,26 @@ import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { gsap } from 'gsap'
 import { useInteractiveLineField } from '../composables/useInteractiveLineField'
 import { useScrollZoom } from '../composables/useScrollZoom'
+import { useDarkClusterV } from '../composables/useDarkClusterV'
 
 const sectionRef = useTemplateRef('section')
 const lineCanvasRef = useTemplateRef('lineCanvas')
 const bgVideoRef = useTemplateRef('bgVideo')
-const zoomImageRef = useTemplateRef('zoomImage')
+const clusterContainerRef = useTemplateRef('clusterContainer')
+const clusterCanvasRef = useTemplateRef('clusterCanvas')
 
 // Passive "touch the lines" cursor-bend effect stays active in the
 // background — only the hold-to-blast hotspot (and its label) was removed.
 useInteractiveLineField(lineCanvasRef, sectionRef)
 
-// Same two elements/two tweens as codepen.io/GreenSock/pen/YzbPYMx: the
-// `.image-container img` role (scale 2 + z 350, the dramatic zoom) is
-// `zoomImage` (BGHTML.png — its window is now cut out transparent in the
-// source file), and the `.section.hero` background role (scale 1.1) is
-// `bgVideo`, sitting behind it at the same position/size so the animation
-// shows straight through the window. The two roles scale at different
-// rates/timing on purpose — that mismatch is what reads as perspective:
-// the foreground frame zooms in hard while the video behind it drifts at
-// its own slower pace, the same depth cue the reference gets from photo
-// vs. mountain background. See useScrollZoom.js.
-useScrollZoom(zoomImageRef, bgVideoRef, sectionRef)
+// Spinning, noise-breathing shard cluster arranged into a V — adapted from
+// tympanus.net/codrops "dark cluster" (WebGPU/TSL). See useDarkClusterV.js.
+useDarkClusterV(clusterCanvasRef, clusterContainerRef)
+
+// The ornate window-frame PNG that used to sit in front of the video was
+// removed — the video itself now takes the dramatic scroll-driven zoom
+// that used to belong to that frame layer. See useScrollZoom.js.
+useScrollZoom(bgVideoRef, null, sectionRef)
 
 // Rotating headline word, swapped on a timer with a glitch transition (see
 // the `word-glitch` keyframes below) — echoes the obscured/blurred word in
@@ -104,19 +103,6 @@ onBeforeUnmount(() => {
       />
     </div>
 
-    <!-- `.image-container > img` from the reference — its own absolute box
-         with `perspective: 500px`, gets the timeline's scale:2 + z:350
-         tween (the dramatic zoom). BGHTML.png's window is cut out
-         transparent, so bgVideo shows straight through it. -->
-    <div class="absolute inset-x-0 top-0 z-[2] h-full overflow-hidden [perspective:500px]">
-      <img
-        ref="zoomImage"
-        class="pointer-events-none h-full w-full object-cover object-center"
-        :src="'/images/BGHTML.png'"
-        alt=""
-      />
-    </div>
-
     <!-- Touchable line field: bends away from the cursor (see useInteractiveLineField.js) -->
     <canvas ref="lineCanvas" class="pointer-events-none absolute inset-0 z-[3]" />
 
@@ -132,6 +118,17 @@ onBeforeUnmount(() => {
     <div
       class="pointer-events-none absolute inset-0 z-[4] opacity-[0.05] [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:64px_64px]"
     />
+
+    <!-- Dark-cluster V: a spinning cluster of shards forming a V, floating
+         over the video in the open space right of the headline. Hidden on
+         mobile — a continuous WebGPU render loop isn't worth it on small
+         screens/weaker GPUs for a purely decorative centerpiece. -->
+    <div
+      ref="clusterContainer"
+      class="absolute right-[2%] top-1/2 z-[6] hidden h-[58vh] max-h-[600px] w-[42vw] max-w-[600px] -translate-y-1/2 sm:block"
+    >
+      <canvas ref="clusterCanvas" class="h-full w-full" />
+    </div>
 
     <div class="relative z-10 w-full px-6 sm:px-10">
       <p data-reveal class="text-eyebrow text-brand-accent">PT Veltera Digital Technologies</p>
