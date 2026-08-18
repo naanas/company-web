@@ -18,10 +18,10 @@ async function loadThree() {
 }
 
 // How far each shard is pushed out from its parent face along that face's
-// outward direction — same constant/approach as the Codrops "dark cluster"
-// tutorial this is adapted from (github.com/kekkorider/codrops-tutorial-dark-cluster),
+// own outward normal — same idea as the Codrops "dark cluster" tutorial
+// this is adapted from (github.com/kekkorider/codrops-tutorial-dark-cluster),
 // just applied to a V-shaped source mesh instead of an icosahedron.
-const FACE_EXTRUSION = 0.45
+const FACE_EXTRUSION = 0.32
 const ACCENT = [0.133, 0.827, 0.933] // --color-brand-accent (#22d3ee)
 const SILVER = [0.82, 0.85, 0.88]
 const NEAR_BLACK = [0.02, 0.02, 0.03]
@@ -34,13 +34,13 @@ const NEAR_BLACK = [0.02, 0.02, 0.03]
  * face), so any triangulated source mesh works here, not just spheres.
  */
 function buildVGeometry(THREE, mergeGeometries) {
-  const width = 0.42
-  const length = 2.6
-  const thickness = 0.32
+  const width = 0.5
+  const length = 2.7
+  const thickness = 0.36
   const angle = THREE.MathUtils.degToRad(24)
 
   function bar(sign) {
-    const geometry = new THREE.BoxGeometry(width, length, thickness, 2, 10, 1)
+    const geometry = new THREE.BoxGeometry(width, length, thickness, 2, 7, 1)
     geometry.translate(0, length / 2, 0) // pivot at the bar's bottom end
     geometry.rotateZ(sign * angle)
     return geometry
@@ -48,7 +48,8 @@ function buildVGeometry(THREE, mergeGeometries) {
 
   const merged = mergeGeometries([bar(1), bar(-1)])
   const nonIndexed = merged.toNonIndexed()
-  nonIndexed.translate(0, -1.05, 0) // recenter the V around the origin
+  const topY = length * Math.cos(angle)
+  nonIndexed.translate(0, -topY / 2, 0) // recenter the V around the origin
   return nonIndexed
 }
 
@@ -116,9 +117,18 @@ function buildMaterials(THREE, TSL) {
  * triangular-prism "shard" (8 triangles) and adds it as one instance of a
  * single BatchedMesh — a direct port of the tutorial's `createExtrudedFaces`,
  * generalized to whatever geometry is passed in.
+ *
+ * The tutorial extrudes each shard along `faceCentroid - mesh.position`
+ * (direction from the mesh's origin to the face) rather than the face's own
+ * normal — a shortcut that only works because their source mesh is a
+ * roughly-spherical icosahedron centered at that same origin, where
+ * "away from center" and "face normal" happen to coincide. An elongated,
+ * off-center shape like this V doesn't have that property, so this version
+ * computes each face's actual normal instead — the fix that turns the
+ * shard cluster from a smeared, off-axis mess into a clean V silhouette.
  */
 function buildShardCluster(THREE, sourceMesh, clusterMaterial) {
-  const { geometry, position: meshPosition } = sourceMesh
+  const { geometry } = sourceMesh
   const positionAttribute = geometry.getAttribute('position')
   const { array } = positionAttribute
   const numVertices = array.length
@@ -128,7 +138,11 @@ function buildShardCluster(THREE, sourceMesh, clusterMaterial) {
   facesMesh.name = 'facesMesh'
 
   const faceCentroid = new THREE.Vector3()
-  const faceDirection = new THREE.Vector3()
+  const faceNormal = new THREE.Vector3()
+  const vA = new THREE.Vector3()
+  const vB = new THREE.Vector3()
+  const vC = new THREE.Vector3()
+  const triangle = new THREE.Triangle()
   const instanceMatrix = new THREE.Matrix4()
 
   for (let i = 0; i < numVertices; i += 9) {
@@ -137,11 +151,15 @@ function buildShardCluster(THREE, sourceMesh, clusterMaterial) {
     const x3 = array[i + 6], y3 = array[i + 7], z3 = array[i + 8]
 
     faceCentroid.set(x1 + x2 + x3, y1 + y2 + y3, z1 + z2 + z3).divideScalar(3)
-    faceDirection.copy(faceCentroid).sub(meshPosition).normalize()
+    vA.set(x1, y1, z1)
+    vB.set(x2, y2, z2)
+    vC.set(x3, y3, z3)
+    triangle.set(vA, vB, vC)
+    triangle.getNormal(faceNormal)
 
-    const ex = faceDirection.x * FACE_EXTRUSION
-    const ey = faceDirection.y * FACE_EXTRUSION
-    const ez = faceDirection.z * FACE_EXTRUSION
+    const ex = faceNormal.x * FACE_EXTRUSION
+    const ey = faceNormal.y * FACE_EXTRUSION
+    const ez = faceNormal.z * FACE_EXTRUSION
 
     const x4 = x1 + ex, y4 = y1 + ey, z4 = z1 + ez
     const x5 = x2 + ex, y5 = y2 + ey, z5 = z2 + ez
@@ -265,9 +283,14 @@ export function useDarkClusterV(canvasRef, containerRef) {
 
     const scene = new THREE.Scene()
     camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100)
-    camera.position.z = 4
+    camera.position.z = 3.8
 
-    renderer = new THREE.WebGPURenderer({ canvas: canvasRef.value, antialias: true, alpha: true })
+    // Opaque, matching --color-brand-950 exactly — simpler and more robust
+    // than fighting the post-processing pipeline for alpha compositing, and
+    // this canvas is the hero's sole background layer now anyway, so there's
+    // nothing beneath it that needs to show through.
+    renderer = new THREE.WebGPURenderer({ canvas: canvasRef.value, antialias: true })
+    renderer.setClearColor(0x060607, 1)
     await renderer.init()
 
     const vGeometry = buildVGeometry(THREE, mergeGeometries)

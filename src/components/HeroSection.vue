@@ -1,28 +1,22 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { gsap } from 'gsap'
-import { useInteractiveLineField } from '../composables/useInteractiveLineField'
 import { useScrollZoom } from '../composables/useScrollZoom'
 import { useDarkClusterV } from '../composables/useDarkClusterV'
 
 const sectionRef = useTemplateRef('section')
-const lineCanvasRef = useTemplateRef('lineCanvas')
-const bgVideoRef = useTemplateRef('bgVideo')
 const clusterContainerRef = useTemplateRef('clusterContainer')
 const clusterCanvasRef = useTemplateRef('clusterCanvas')
 
-// Passive "touch the lines" cursor-bend effect stays active in the
-// background — only the hold-to-blast hotspot (and its label) was removed.
-useInteractiveLineField(lineCanvasRef, sectionRef)
-
-// Spinning, noise-breathing shard cluster arranged into a V — adapted from
+// Spinning, noise-breathing shard cluster arranged into a V — the hero's
+// sole centerpiece now that the background video is gone. Adapted from
 // tympanus.net/codrops "dark cluster" (WebGPU/TSL). See useDarkClusterV.js.
 useDarkClusterV(clusterCanvasRef, clusterContainerRef)
 
-// The ornate window-frame PNG that used to sit in front of the video was
-// removed — the video itself now takes the dramatic scroll-driven zoom
-// that used to belong to that frame layer. See useScrollZoom.js.
-useScrollZoom(bgVideoRef, null, sectionRef)
+// Scroll-driven zoom, retargeted from the old background video onto the
+// cluster's canvas container (a plain CSS scale — the WebGPU scene itself
+// isn't scroll-aware). See useScrollZoom.js.
+useScrollZoom(clusterContainerRef, null, sectionRef)
 
 // Rotating headline word, swapped on a timer with a glitch transition (see
 // the `word-glitch` keyframes below) — echoes the obscured/blurred word in
@@ -31,24 +25,6 @@ useScrollZoom(bgVideoRef, null, sectionRef)
 const words = ['purpose', 'depth', 'something', 'impact', 'intention']
 const wordIndex = ref(0)
 let wordInterval = null
-let stopBgVideo = null
-
-// Chrome pauses silent, video-only background media as a power-saving
-// measure ("video-only background media was paused to save power") — it
-// can hit an autoplaying, audio-less loop like this one even while the tab
-// is genuinely in view. Resuming on 'pause' (only while the page is
-// actually visible, so it doesn't fight a deliberate background-tab pause)
-// makes the loop self-heal instead of freezing on one frame.
-function keepPlaying(videoRef) {
-  const video = videoRef.value
-  if (!video) return
-  const resume = () => {
-    if (document.visibilityState === 'visible') video.play().catch(() => {})
-  }
-  resume()
-  video.addEventListener('pause', resume)
-  return () => video.removeEventListener('pause', resume)
-}
 
 // The hero is always visible on load, so its entrance plays as a plain
 // on-mount timeline rather than a ScrollTrigger reveal — scroll-linked
@@ -67,18 +43,10 @@ onMounted(() => {
   wordInterval = setInterval(() => {
     wordIndex.value = (wordIndex.value + 1) % words.length
   }, 2600)
-
-  // The `autoplay` attribute alone is unreliable — some browsers/embed
-  // contexts silently never start loading the video without an explicit
-  // play() call, leaving it stuck paused at frame 0 indefinitely. Calling
-  // it directly is the robust way to kick off autoplay; `muted` is what
-  // makes browsers allow it without a user gesture.
-  stopBgVideo = keepPlaying(bgVideoRef)
 })
 
 onBeforeUnmount(() => {
   clearInterval(wordInterval)
-  stopBgVideo?.()
 })
 </script>
 
@@ -88,44 +56,23 @@ onBeforeUnmount(() => {
     ref="section"
     class="relative flex min-h-screen items-start overflow-hidden bg-brand-950 pt-36 sm:pt-40"
   >
-    <!-- `.content .section.hero` from the reference — background layer,
-         normal flow, gets the timeline's scale:1.1 tween. Same box/sizing as
-         the photo layer below so it lines up behind the window. -->
-    <div class="absolute inset-0 z-[1] overflow-hidden">
-      <video
-        ref="bgVideo"
-        class="pointer-events-none h-full w-full object-cover object-center"
-        :src="'/videos/veltechlogo.mp4'"
-        autoplay
-        muted
-        loop
-        playsinline
-      />
-    </div>
+    <!-- Ambient brand-color glow behind the cluster, standing in for the
+         removed background video so the section isn't flat black. -->
+    <div class="pointer-events-none absolute -top-32 -right-32 z-[1] h-[34rem] w-[34rem] rounded-full bg-brand-accent/10 blur-[140px]" />
+    <div class="pointer-events-none absolute -bottom-40 -left-24 z-[1] h-[28rem] w-[28rem] rounded-full bg-brand-accent-2/10 blur-[140px]" />
 
-    <!-- Touchable line field: bends away from the cursor (see useInteractiveLineField.js) -->
-    <canvas ref="lineCanvas" class="pointer-events-none absolute inset-0 z-[3]" />
-
-    <div class="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-r from-brand-950 via-brand-950/60 to-transparent" />
+    <!-- Darkens only the text column on the left for legibility; fades out
+         well before the cluster's territory so the V itself stays clear. -->
+    <div class="pointer-events-none absolute inset-0 z-[3] [background:linear-gradient(to_right,var(--color-brand-950)_0%,var(--color-brand-950)_32%,transparent_58%)]" />
     <div class="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-transparent via-transparent to-brand-950" />
 
-    <!-- Ambient brand-color glow, tinting the darkened edges left by the
-         gradients above instead of leaving them flat black. -->
-    <div class="pointer-events-none absolute -top-32 -right-32 z-[4] h-[34rem] w-[34rem] rounded-full bg-brand-accent/10 blur-[140px]" />
-    <div class="pointer-events-none absolute -bottom-40 -left-24 z-[4] h-[28rem] w-[28rem] rounded-full bg-brand-accent-2/10 blur-[140px]" />
-
-    <!-- Faint blueprint grid texture for depth in the negative space. -->
-    <div
-      class="pointer-events-none absolute inset-0 z-[4] opacity-[0.05] [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:64px_64px]"
-    />
-
-    <!-- Dark-cluster V: a spinning cluster of shards forming a V, floating
-         over the video in the open space right of the headline. Hidden on
+    <!-- Dark-cluster V: a spinning cluster of shards forming a V — the
+         hero's centerpiece, replacing the old background video. Hidden on
          mobile — a continuous WebGPU render loop isn't worth it on small
-         screens/weaker GPUs for a purely decorative centerpiece. -->
+         screens/weaker GPUs for what's a purely decorative object there. -->
     <div
       ref="clusterContainer"
-      class="absolute right-[2%] top-1/2 z-[6] hidden h-[58vh] max-h-[600px] w-[42vw] max-w-[600px] -translate-y-1/2 sm:block"
+      class="absolute top-24 bottom-0 right-[-6%] z-[2] hidden w-[68vw] max-w-[880px] sm:block sm:top-28"
     >
       <canvas ref="clusterCanvas" class="h-full w-full" />
     </div>
@@ -155,7 +102,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- Company blurb, bottom-right -->
-    <p data-reveal class="absolute bottom-24 right-6 hidden max-w-xs text-right text-sm leading-relaxed text-white/50 sm:right-10 sm:bottom-28 md:block">
+    <p data-reveal class="absolute bottom-24 right-6 z-10 hidden max-w-xs text-right text-sm leading-relaxed text-white/50 sm:right-10 sm:bottom-28 md:block">
       VELTECH is an IT consulting firm, digital agency, and software house building
       websites, applications, and custom systems — designed for clarity, built to scale.
     </p>
@@ -164,7 +111,7 @@ onBeforeUnmount(() => {
     <a
       href="#about"
       aria-label="Scroll down"
-      class="absolute bottom-8 left-6 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/40 transition hover:border-white/40 hover:text-white sm:left-10"
+      class="absolute bottom-8 left-6 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/40 transition hover:border-white/40 hover:text-white sm:left-10"
     >
       ↓
     </a>
