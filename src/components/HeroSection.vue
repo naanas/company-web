@@ -123,6 +123,16 @@ onBeforeUnmount(() => {
     <div class="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-r from-brand-950 via-brand-950/60 to-transparent" />
     <div class="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-transparent via-transparent to-brand-950" />
 
+    <!-- Ambient brand-color glow, tinting the darkened edges left by the
+         gradients above instead of leaving them flat black. -->
+    <div class="pointer-events-none absolute -top-32 -right-32 z-[4] h-[34rem] w-[34rem] rounded-full bg-brand-accent/10 blur-[140px]" />
+    <div class="pointer-events-none absolute -bottom-40 -left-24 z-[4] h-[28rem] w-[28rem] rounded-full bg-brand-accent-2/10 blur-[140px]" />
+
+    <!-- Faint blueprint grid texture for depth in the negative space. -->
+    <div
+      class="pointer-events-none absolute inset-0 z-[4] opacity-[0.05] [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:64px_64px]"
+    />
+
     <div class="relative z-10 w-full px-6 sm:px-10">
       <p data-reveal class="text-eyebrow text-brand-accent">PT Veltera Digital Technologies</p>
 
