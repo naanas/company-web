@@ -56,11 +56,6 @@ onBeforeUnmount(() => {
     ref="section"
     class="relative flex min-h-screen items-start overflow-hidden bg-brand-950 pt-36 sm:pt-40"
   >
-    <!-- Ambient brand-color glow behind the cluster, standing in for the
-         removed background video so the section isn't flat black. -->
-    <div class="pointer-events-none absolute -top-32 -right-32 z-[1] h-[34rem] w-[34rem] rounded-full bg-brand-accent/10 blur-[140px]" />
-    <div class="pointer-events-none absolute -bottom-40 -left-24 z-[1] h-[28rem] w-[28rem] rounded-full bg-brand-accent-2/10 blur-[140px]" />
-
     <!-- Darkens only the text column on the left for legibility; fades out
          well before the cluster's territory so the V itself stays clear. -->
     <div class="pointer-events-none absolute inset-0 z-[3] [background:linear-gradient(to_right,var(--color-brand-950)_0%,var(--color-brand-950)_32%,transparent_58%)]" />
