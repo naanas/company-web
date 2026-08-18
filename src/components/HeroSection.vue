@@ -142,21 +142,21 @@ onBeforeUnmount(() => {
         href="#contact"
         class="group mt-8 inline-flex items-center gap-2 border-b border-white/30 pb-1 text-sm uppercase tracking-[0.15em] text-white/80 transition-colors hover:border-brand-accent hover:text-white"
       >
-        Mulai Proyek
+        Start a Project
         <span class="transition-transform group-hover:translate-x-1">→</span>
       </a>
     </div>
 
     <!-- Company blurb, bottom-right -->
     <p data-reveal class="absolute bottom-24 right-6 hidden max-w-xs text-right text-sm leading-relaxed text-white/50 sm:right-10 sm:bottom-28 md:block">
-      VELTECH adalah konsultan IT, digital agency, dan software house yang membangun
-      website, aplikasi, dan sistem custom — dirancang untuk kejelasan, dibangun untuk skala.
+      VELTECH is an IT consulting firm, digital agency, and software house building
+      websites, applications, and custom systems — designed for clarity, built to scale.
     </p>
 
     <!-- Scroll hint, bottom-left -->
     <a
       href="#about"
-      aria-label="Scroll ke bawah"
+      aria-label="Scroll down"
       class="absolute bottom-8 left-6 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/40 transition hover:border-white/40 hover:text-white sm:left-10"
     >
       ↓

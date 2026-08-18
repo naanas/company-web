@@ -3,53 +3,61 @@ import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useScrollReveal } from '../composables/useScrollReveal'
+import { useBlurTextReveal } from '../composables/useBlurTextReveal'
 
 gsap.registerPlugin(ScrollTrigger)
 
 const sectionRef = useTemplateRef('section')
+const headingRef = useTemplateRef('heading')
 useScrollReveal(sectionRef, { stagger: 0.12 })
+useBlurTextReveal(headingRef)
 
-let pinTrigger = null
+let matchMedia = null
 
 // `pinSpacing: false` pins this section in place while WorkSection keeps
 // scrolling normally and slides up over it like a curtain. Duration is
 // pinned to a full viewport height rather than the section's own (variable)
 // content height, so the transition reads consistently regardless of
-// stat/partner count.
+// stat/partner count. Shortened on mobile — a full 100% pin reads as the
+// page "getting stuck" on small screens where there's less content to fill
+// the wait.
 onMounted(() => {
   if (!sectionRef.value) return
-  pinTrigger = ScrollTrigger.create({
-    trigger: sectionRef.value,
-    start: 'top top',
-    end: '+=100%',
-    pin: true,
-    pinSpacing: false,
+  matchMedia = gsap.matchMedia()
+  matchMedia.add({ isMobile: '(max-width: 767px)' }, (context) => {
+    ScrollTrigger.create({
+      trigger: sectionRef.value,
+      start: 'top top',
+      end: context.conditions.isMobile ? '+=60%' : '+=100%',
+      pin: true,
+      pinSpacing: false,
+    })
   })
 })
 
 onBeforeUnmount(() => {
-  pinTrigger?.kill()
+  matchMedia?.revert()
 })
 
 // Placeholder figures — swap for real numbers, then wire each value up to
 // `useCountUp(elRef, { value })` for the same animated count-up trionn uses.
 const stats = [
-  { label: 'Tahun Pengalaman', value: 'XX+' },
-  { label: 'Proyek Selesai', value: 'XX+', caption: 'XX% klien kami memesan layanan untuk proyek kedua.' },
-  { label: 'Anggota Tim', value: 'XX+' },
+  { label: 'Years of Experience', value: 'XX+' },
+  { label: 'Projects Completed', value: 'XX+', caption: 'XX% of our clients return for a second project.' },
+  { label: 'Team Members', value: 'XX+' },
 ]
 
-const partners = ['Mitra Satu', 'Mitra Dua', 'Mitra Tiga', 'Mitra Empat', 'Mitra Lima']
+const partners = ['Partner One', 'Partner Two', 'Partner Three', 'Partner Four', 'Partner Five']
 </script>
 
 <template>
   <section id="stats" ref="section" class="relative bg-paper-100 px-6 py-32 text-paper-ink">
     <div class="mx-auto max-w-6xl">
       <div class="text-center">
-        <p data-reveal class="text-eyebrow text-paper-muted">Fakta Singkat</p>
-        <h2 data-reveal class="text-display mt-4 text-paper-ink">Fakta Singkat</h2>
+        <p data-reveal class="text-eyebrow text-paper-muted">Quick Facts</p>
+        <h2 ref="heading" class="text-display mt-4 text-paper-ink">Quick Facts</h2>
         <p data-reveal class="mx-auto mt-4 max-w-md text-paper-muted">
-          Gambaran singkat pengalaman dan dampak kami sejauh ini.
+          A brief look at our experience and impact so far.
         </p>
       </div>
 
@@ -67,7 +75,7 @@ const partners = ['Mitra Satu', 'Mitra Dua', 'Mitra Tiga', 'Mitra Empat', 'Mitra
       </div>
 
       <div data-reveal class="mt-20 border-t border-black/10 pt-10 text-center">
-        <p class="text-eyebrow mb-8 text-paper-muted">Mitra Bisnis Kami</p>
+        <p class="text-eyebrow mb-8 text-paper-muted">Our Business Partners</p>
         <div class="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
           <span
             v-for="partner in partners"

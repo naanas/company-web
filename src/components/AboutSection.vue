@@ -1,43 +1,78 @@
 <script setup>
-import { computed, useTemplateRef } from 'vue'
-import { useWordsScrub } from '../composables/useWordsScrub'
-import { useScrollReveal } from '../composables/useScrollReveal'
+import { computed, onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useMarquee } from '../composables/useMarquee'
 
+gsap.registerPlugin(ScrollTrigger)
+
 const sectionRef = useTemplateRef('section')
+const eyebrowRef = useTemplateRef('eyebrow')
 const wordsRef = useTemplateRef('words')
+const missionRef = useTemplateRef('mission')
 const trackRef = useTemplateRef('track')
 
-useWordsScrub(sectionRef, wordsRef)
-useScrollReveal(sectionRef, { selector: '[data-reveal]', start: 'top 85%' })
 useMarquee(trackRef, { speed: 60 })
 
 const missionText =
-  'VELTECH adalah konsultan IT dan software house independen yang membangun sistem serta produk digital bermakna melalui strategi, rekayasa perangkat lunak, dan desain.'
+  'VELTECH is an independent IT consulting and software house building meaningful systems and digital products through strategy, software engineering, and design.'
 
 const words = computed(() => missionText.split(' '))
-const marqueeWords = ['INOVASI', 'DAMPAK', 'INSPIRASI', 'INTEGRITAS']
+const marqueeWords = ['INNOVATION', 'IMPACT', 'INSPIRATION', 'INTEGRITY']
+
+let scrollTrigger = null
+
+// The intro line, the word-by-word mission scrub, and the mission/link block
+// all read off one shared scroll-linked timeline instead of separate
+// ScrollTriggers with their own start/end math — keeps all three locked to
+// the same scroll position across this section's sticky range rather than
+// risking drift between independently-tuned triggers.
+onMounted(() => {
+  if (!sectionRef.value || !eyebrowRef.value || !wordsRef.value || !missionRef.value) return
+
+  const wordEls = wordsRef.value.querySelectorAll('[data-word]')
+
+  const timeline = gsap.timeline({
+    scrollTrigger: {
+      trigger: sectionRef.value,
+      start: 'top 85%',
+      end: 'bottom 60%',
+      scrub: 0.5,
+    },
+  })
+
+  timeline
+    .fromTo(eyebrowRef.value, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, ease: 'power3.out' }, 0)
+    .fromTo(missionRef.value, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, ease: 'power3.out' }, 0.05)
+    .fromTo(wordEls, { opacity: 0.15 }, { opacity: 1, stagger: 0.5, ease: 'none' }, 0.15)
+
+  scrollTrigger = timeline.scrollTrigger
+})
+
+onBeforeUnmount(() => {
+  scrollTrigger?.kill()
+})
 </script>
 
 <template>
   <section id="about" ref="section" class="relative min-h-[130vh] overflow-hidden bg-paper-100">
-    <div class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pt-32 pb-16 lg:sticky lg:top-32">
-      <div data-reveal class="text-eyebrow max-w-xs text-paper-muted">
-        Kami Merancang untuk Ketahanan Jangka Panjang.<br />
-        Kejelasan Lebih Dulu, Kualitas Selalu, Dibangun untuk Skala.
+    <div class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pt-16 pb-16 lg:sticky lg:top-16">
+      <div ref="eyebrow" class="text-eyebrow max-w-xs text-paper-muted">
+        We Design for Long-Term Resilience.<br />
+        Clarity First, Quality Always, Built to Scale.
       </div>
 
       <p ref="words" class="text-display max-w-5xl text-paper-ink">
         <span v-for="(word, i) in words" :key="i" data-word class="mr-3 inline-block">{{ word }}</span>
       </p>
 
-      <div data-reveal class="ml-auto flex max-w-sm flex-col items-start gap-6 text-right sm:text-left">
+      <div ref="mission" class="ml-auto flex max-w-sm flex-col items-start gap-6 text-right sm:text-left">
         <p class="text-paper-muted">
-          Misi kami adalah membuat teknologi terasa manusiawi — merancang produk digital yang
-          intuitif, purposeful, dan bermakna bagi penggunanya.
+          Our mission is to make technology feel human — designing digital products that
+          are intuitive, purposeful, and meaningful to their users.
         </p>
-        <a href="#services" class="group flex items-center gap-2 border-b border-paper-ink/30 pb-1 text-sm font-medium text-paper-ink/80 transition-colors hover:border-paper-ink hover:text-paper-ink">
-          Selengkapnya Tentang Kami
+        <a href="#work" class="group flex items-center gap-2 border-b border-paper-ink/30 pb-1 text-sm font-medium text-paper-ink/80 transition-colors hover:border-paper-ink hover:text-paper-ink">
+          More About Us
           <span class="transition-transform group-hover:translate-x-1">→</span>
         </a>
       </div>

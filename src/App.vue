@@ -4,7 +4,6 @@ import HeroSection from './components/HeroSection.vue'
 import AboutSection from './components/AboutSection.vue'
 import StatsSection from './components/StatsSection.vue'
 import WorkSection from './components/WorkSection.vue'
-import ServicesSection from './components/ServicesSection.vue'
 import ProcessSection from './components/ProcessSection.vue'
 import TestimonialSection from './components/TestimonialSection.vue'
 import ContactSection from './components/ContactSection.vue'
@@ -25,7 +24,6 @@ useSmoothAnchorScroll()
     <AboutSection />
     <StatsSection />
     <WorkSection />
-    <ServicesSection />
     <ProcessSection />
     <TestimonialSection />
     <ContactSection />

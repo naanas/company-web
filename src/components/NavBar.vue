@@ -11,7 +11,6 @@ const headerRef = useTemplateRef('header')
 
 const links = [
   { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
   { label: 'Our Clients', href: '#work' },
   { label: 'Process', href: '#process' },
   { label: 'Contact', href: '#contact' },
@@ -97,7 +96,7 @@ onBeforeUnmount(() => {
           href="#contact"
           class="hidden rounded-full bg-white px-5 py-2 text-sm font-medium text-brand-950 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.25)] sm:inline-block"
         >
-          Mari Bicara
+          Let's Talk
         </a>
 
         <button

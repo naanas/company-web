@@ -1,9 +1,12 @@
 <script setup>
 import { reactive, ref, useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
+import { useBlurTextReveal } from '../composables/useBlurTextReveal'
 
 const sectionRef = useTemplateRef('section')
+const headingRef = useTemplateRef('heading')
 useScrollReveal(sectionRef)
+useBlurTextReveal(headingRef, { start: 'top 90%' })
 
 const form = reactive({
   name: '',
@@ -50,15 +53,15 @@ const socials = [
 
     <div class="relative mx-auto max-w-6xl">
       <div class="flex flex-col gap-10 border-b border-white/10 pb-16 lg:flex-row lg:items-end lg:justify-between">
-        <h2 data-reveal class="text-display-lg max-w-2xl text-white">
-          Siap Membangun<br />Sesuatu yang Bermakna?
+        <h2 ref="heading" class="text-display-lg max-w-2xl text-white">
+          Ready to Build<br />Something Meaningful?
         </h2>
         <a
           data-reveal
           href="#contact-form"
           class="group flex items-center gap-2 border-b border-white/30 pb-1 text-sm font-medium uppercase tracking-widest text-white/80 transition-colors hover:border-white hover:text-white"
         >
-          Mulai Kolaborasi
+          Start a Collaboration
           <span class="transition-transform group-hover:translate-x-1">→</span>
         </a>
       </div>
@@ -69,7 +72,7 @@ const socials = [
             v-model="form.name"
             type="text"
             name="name"
-            placeholder="Nama"
+            placeholder="Name"
             required
             class="rounded-lg border border-white/15 bg-transparent px-4 py-3 text-white placeholder-white/40 outline-none transition-colors focus:border-brand-accent"
           />
@@ -77,7 +80,7 @@ const socials = [
             v-model="form.company"
             type="text"
             name="company"
-            placeholder="Perusahaan"
+            placeholder="Company"
             class="rounded-lg border border-white/15 bg-transparent px-4 py-3 text-white placeholder-white/40 outline-none transition-colors focus:border-brand-accent"
           />
           <input
@@ -92,14 +95,14 @@ const socials = [
             v-model="form.phone"
             type="tel"
             name="phone"
-            placeholder="Nomor Telepon"
+            placeholder="Phone Number"
             class="rounded-lg border border-white/15 bg-transparent px-4 py-3 text-white placeholder-white/40 outline-none transition-colors focus:border-brand-accent"
           />
           <textarea
             v-model="form.message"
             name="message"
             rows="4"
-            placeholder="Ceritakan tentang proyek Anda"
+            placeholder="Tell us about your project"
             class="rounded-lg border border-white/15 bg-transparent px-4 py-3 text-white placeholder-white/40 outline-none transition-colors focus:border-brand-accent"
           />
 
@@ -108,17 +111,17 @@ const socials = [
             :disabled="isSubmitting"
             class="w-fit rounded-full bg-brand-accent px-6 py-3 text-sm font-medium text-brand-950 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(34,211,238,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {{ isSubmitting ? 'Mengirim…' : 'Kirim Pesan' }}
+            {{ isSubmitting ? 'Sending…' : 'Send Message' }}
           </button>
 
           <p v-if="submitted" class="text-sm text-brand-accent">
-            Terima kasih! Pesan Anda telah terkirim, tim kami akan segera menghubungi Anda.
+            Thank you! Your message has been sent, our team will be in touch shortly.
           </p>
         </form>
 
         <div data-reveal class="flex flex-col gap-10 lg:items-end lg:text-right">
           <div>
-            <p class="text-eyebrow text-white/40">Kontak Bisnis</p>
+            <p class="text-eyebrow text-white/40">Business Contact</p>
             <a :href="`mailto:${contact.email}`" class="mt-3 block text-lg text-white transition hover:text-brand-accent">
               {{ contact.email }}
             </a>
@@ -128,7 +131,7 @@ const socials = [
           </div>
 
           <div>
-            <p class="text-eyebrow text-white/40">Sosial</p>
+            <p class="text-eyebrow text-white/40">Social</p>
             <div class="mt-3 flex flex-col gap-1 lg:items-end">
               <a
                 v-for="social in socials"

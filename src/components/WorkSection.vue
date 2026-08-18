@@ -3,6 +3,8 @@ import { useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useMarquee } from '../composables/useMarquee'
 import { useCardBeamScanner } from '../composables/useCardBeamScanner'
+import { usePreloadImages } from '../composables/usePreloadImages'
+import { useBlurTextReveal } from '../composables/useBlurTextReveal'
 import erpThumb from '../assets/images/projects/erp.svg'
 import mobileThumb from '../assets/images/projects/mobile.svg'
 import ecommerceThumb from '../assets/images/projects/ecommerce.svg'
@@ -11,8 +13,10 @@ import aiDataThumb from '../assets/images/projects/ai-data.svg'
 const sectionRef = useTemplateRef('section')
 const trackRef = useTemplateRef('track')
 const scannerRef = useTemplateRef('scanner')
+const headingRef = useTemplateRef('heading')
 
 useScrollReveal(sectionRef, { selector: '[data-reveal-head]' })
+useBlurTextReveal(headingRef)
 useMarquee(trackRef, { speed: 70 })
 useCardBeamScanner(trackRef, scannerRef)
 
@@ -21,29 +25,31 @@ useCardBeamScanner(trackRef, scannerRef)
 const projects = [
   {
     tag: 'ERP',
-    title: 'Sistem ERP Manufaktur',
-    description: 'Platform ERP custom untuk efisiensi operasional dan visibilitas lini produksi pabrik.',
+    title: 'Manufacturing ERP System',
+    description: 'A custom ERP platform for operational efficiency and factory production-line visibility.',
     image: erpThumb,
   },
   {
     tag: 'Mobile',
-    title: 'Aplikasi Mobile Logistik',
-    description: 'Aplikasi tracking pengiriman real-time untuk tim lapangan dan armada distribusi.',
+    title: 'Logistics Mobile App',
+    description: 'A real-time shipment tracking app for field teams and distribution fleets.',
     image: mobileThumb,
   },
   {
     tag: 'E-Commerce',
-    title: 'Platform E-Commerce B2B',
-    description: 'Marketplace B2B dengan integrasi pembayaran, inventori, dan manajemen vendor.',
+    title: 'B2B E-Commerce Platform',
+    description: 'A B2B marketplace with payment integration, inventory, and vendor management.',
     image: ecommerceThumb,
   },
   {
     tag: 'AI & Data',
-    title: 'Dashboard Analitik AI',
-    description: 'Dashboard prediktif berbasis AI untuk pengambilan keputusan bisnis yang lebih cepat.',
+    title: 'AI Analytics Dashboard',
+    description: 'An AI-powered predictive dashboard for faster business decision-making.',
     image: aiDataThumb,
   },
 ]
+
+usePreloadImages(projects.map((p) => p.image))
 </script>
 
 <template>
@@ -51,16 +57,16 @@ const projects = [
     <div class="mx-auto max-w-6xl px-6">
       <div class="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p data-reveal-head class="text-eyebrow text-brand-accent">Karya Kami</p>
-          <h2 data-reveal-head class="text-display mt-4 max-w-lg text-white">
-            Proyek yang Kami Bangun
+          <p data-reveal-head class="text-eyebrow text-brand-accent">Our Work</p>
+          <h2 ref="heading" class="text-display mt-4 max-w-lg text-white">
+            Projects We've Built
           </h2>
           <p data-reveal-head class="mt-3 max-w-md text-sm text-slate-500">
-            Contoh implementasi produk yang biasa kami kerjakan untuk klien di berbagai industri.
+            Examples of the kind of product implementations we build for clients across industries.
           </p>
         </div>
         <a data-reveal-head href="#contact" class="group flex items-center gap-2 border-b border-white/30 pb-1 text-sm font-medium text-white/80 transition-colors hover:border-white hover:text-white">
-          Diskusikan Proyek Anda
+          Discuss Your Project
           <span class="transition-transform group-hover:translate-x-1">→</span>
         </a>
       </div>

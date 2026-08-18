@@ -25,7 +25,7 @@ function charsToFill(layer) {
 }
 
 /**
- * Drives the "beam scan" reveal on the Karya Kami card stream: a scanner
+ * Drives the "beam scan" reveal on the Our Work card stream: a scanner
  * beam stays fixed at the horizontal center of `trackRef`'s container while
  * cards drift through it (via useMarquee). Each card carries a matrix-style
  * code overlay (`[data-code-layer]`) that clips away left-to-right as it

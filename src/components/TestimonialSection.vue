@@ -11,21 +11,21 @@ useScrollReveal(sectionRef)
 const testimonials = [
   {
     quote:
-      'Tim VELTECH sangat responsif dan memahami kebutuhan bisnis kami. Proses development berjalan transparan dari awal hingga akhir.',
-    name: 'Nama Klien',
-    role: 'Jabatan · Nama Perusahaan',
+      'The VELTECH team was highly responsive and understood our business needs. The development process stayed transparent from start to finish.',
+    name: 'Client Name',
+    role: 'Job Title · Company Name',
   },
   {
     quote:
-      'Sistem yang dibangun langsung terasa dampaknya pada efisiensi operasional. Komunikasi dengan tim teknis juga sangat lancar.',
-    name: 'Nama Klien',
-    role: 'Jabatan · Nama Perusahaan',
+      'The system they built had an immediate impact on our operational efficiency. Communication with the technical team was also very smooth.',
+    name: 'Client Name',
+    role: 'Job Title · Company Name',
   },
   {
     quote:
-      'Pendekatan konsultasinya jelas dan tidak asal jual paket — solusi yang diberikan memang sesuai dengan skala bisnis kami.',
-    name: 'Nama Klien',
-    role: 'Jabatan · Nama Perusahaan',
+      'Their consulting approach was clear and never a one-size-fits-all pitch — the solution they delivered truly matched the scale of our business.',
+    name: 'Client Name',
+    role: 'Job Title · Company Name',
   },
 ]
 
@@ -42,7 +42,7 @@ const active = ref(0)
             :class="active === i ? 'font-medium text-paper-ink' : 'text-paper-muted hover:text-paper-ink/70'"
             @click="active = i"
           >
-            Klien {{ i + 1 }}
+            Client {{ i + 1 }}
           </button>
         </li>
       </ul>
@@ -74,7 +74,7 @@ const active = ref(0)
             </button>
           </div>
           <a href="#contact" class="text-eyebrow border-b border-paper-ink/30 pb-1 text-paper-ink transition hover:border-paper-ink">
-            Jadi Klien Kami →
+            Become Our Client →
           </a>
         </div>
       </div>
