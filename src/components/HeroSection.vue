@@ -72,12 +72,12 @@ onBeforeUnmount(() => {
          screens/weaker GPUs for what's a purely decorative object there. -->
     <div
       ref="clusterContainer"
-      class="absolute top-24 bottom-0 right-[-6%] z-[2] hidden w-[68vw] max-w-[880px] sm:block sm:top-28"
+      class="absolute top-24 bottom-0 right-[6%] z-[2] hidden w-[58vw] max-w-[760px] sm:block sm:top-28"
     >
       <canvas ref="clusterCanvas" class="h-full w-full" />
     </div>
 
-    <div class="relative z-10 w-full px-6 sm:px-10">
+    <div class="relative z-10 mx-auto w-full max-w-6xl px-6 sm:px-10">
       <p data-reveal class="text-eyebrow text-brand-accent">PT Veltera Digital Technologies</p>
 
       <h1
