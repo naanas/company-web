@@ -4,7 +4,8 @@
   --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-heading: "Space Grotesk", "Inter", system-ui, sans-serif;
 
-  /* Near-black base, trionn-style cinematic dark */
+  /* Near-black base — cinematic dark ground for the systems/engineering
+     work VELTECH builds, letting the cyan accent read as signal against it */
   --color-brand-950: #060607;
   --color-brand-900: #0c0d0f;
   --color-brand-800: #141518;
@@ -63,8 +64,9 @@ body {
   letter-spacing: 0.3em;
 }
 
-/* Hairline plus-marks used at section seams, echoing trionn's crosshair
-   accents along the horizontal rules between sections. */
+/* Hairline plus-marks at section seams — a crosshair/schematic mark that
+   reads as "system diagram" rather than decoration, echoing the technical
+   architecture work VELTECH does. */
 .seam {
   position: relative;
   border-top: 1px solid rgba(255, 255, 255, 0.1);

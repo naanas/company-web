@@ -19,10 +19,10 @@ useDarkClusterV(clusterCanvasRef, clusterContainerRef)
 // felt stuck. The cluster carries the hero on its own animation instead.
 
 // Rotating headline word, swapped on a timer with a glitch transition (see
-// the `word-glitch` keyframes below) — echoes the obscured/blurred word in
-// the reference layout, but as an actual cycling word rather than a static
-// blur, with a glitchy cut between words instead of a plain crossfade.
-const words = ['purpose', 'depth', 'something', 'impact', 'intention']
+// the `word-glitch` keyframes below) — the cycling copy names concrete
+// qualities of the systems VELTECH ships, and the glitch cut stands in for
+// a system compiling/resolving rather than a plain crossfade.
+const words = ['purpose', 'depth', 'clarity', 'impact', 'scale']
 const wordIndex = ref(0)
 let wordInterval = null
 

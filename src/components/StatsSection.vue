@@ -16,16 +16,16 @@ useBlurTextReveal(headingRef)
 // heading animations below still run on scroll — they just don't take the
 // scroll position hostage to do it.
 
-// Placeholder figures — swap for real numbers before launch. (The unused
-// count-up composable that used to be referenced here was removed; add an
-// animated counter back alongside the real figures if one is wanted.)
+// Real figures as of Aug 2026 — small numbers on purpose, since VELTECH is
+// a month-old venture. The unused count-up composable that used to live
+// here was removed; add an animated counter back once the values stabilize.
 const stats = [
-  { label: 'Years of Experience', value: 'XX+' },
-  { label: 'Projects Completed', value: 'XX+', caption: 'XX% of our clients return for a second project.' },
-  { label: 'Team Members', value: 'XX+' },
+  { label: 'Founded', value: '2026', caption: 'Est. July 2026 — early, already delivering for Pertamina Lubricants.' },
+  { label: 'Projects Completed', value: '2', caption: 'Our first client, DSP Plumpang (Pertamina Lubricants), returned for a second project.' },
+  { label: 'Team Members', value: '2', caption: 'Sales & full-stack development.' },
 ]
 
-const partners = ['Partner One', 'Partner Two', 'Partner Three', 'Partner Four', 'Partner Five']
+const clients = ['DSP Plumpang · Pertamina Lubricants']
 </script>
 
 <template>
@@ -53,14 +53,14 @@ const partners = ['Partner One', 'Partner Two', 'Partner Three', 'Partner Four',
       </div>
 
       <div data-reveal class="mt-20 border-t border-black/10 pt-10 text-center">
-        <p class="text-eyebrow mb-8 text-paper-muted">Our Business Partners</p>
+        <p class="text-eyebrow mb-8 text-paper-muted">Trusted By</p>
         <div class="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
           <span
-            v-for="partner in partners"
-            :key="partner"
-            class="font-heading text-lg font-semibold text-paper-ink/40 grayscale transition hover:text-paper-ink/70"
+            v-for="client in clients"
+            :key="client"
+            class="font-heading text-lg font-semibold text-paper-ink/70 transition hover:text-paper-ink"
           >
-            {{ partner }}
+            {{ client }}
           </span>
         </div>
       </div>
