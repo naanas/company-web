@@ -1,7 +1,6 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { gsap } from 'gsap'
-import { useScrollZoom } from '../composables/useScrollZoom'
 import { useDarkClusterV } from '../composables/useDarkClusterV'
 
 const sectionRef = useTemplateRef('section')
@@ -13,10 +12,11 @@ const clusterCanvasRef = useTemplateRef('clusterCanvas')
 // tympanus.net/codrops "dark cluster" (WebGPU/TSL). See useDarkClusterV.js.
 useDarkClusterV(clusterCanvasRef, clusterContainerRef)
 
-// Scroll-driven zoom, retargeted from the old background video onto the
-// cluster's canvas container (a plain CSS scale — the WebGPU scene itself
-// isn't scroll-aware). See useScrollZoom.js.
-useScrollZoom(clusterContainerRef, null, sectionRef)
+// No scroll-driven zoom here any more. It worked by pinning the hero for
+// 150% of the viewport and scrubbing a CSS scale on the cluster container,
+// which meant compositing a scaled WebGPU canvas on every scroll frame
+// while the page was held in place — the section stuttered and the scroll
+// felt stuck. The cluster carries the hero on its own animation instead.
 
 // Rotating headline word, swapped on a timer with a glitch transition (see
 // the `word-glitch` keyframes below) — echoes the obscured/blurred word in
@@ -28,9 +28,8 @@ let wordInterval = null
 
 // The hero is always visible on load, so its entrance plays as a plain
 // on-mount timeline rather than a ScrollTrigger reveal — scroll-linked
-// triggers here would be racing the initial layout (webfonts swapping in,
-// the pinned services section inserting its spacer) for no visual benefit,
-// since the section is already on screen either way.
+// triggers here would be racing the initial layout (webfonts swapping in)
+// for no visual benefit, since the section is already on screen either way.
 onMounted(() => {
   if (!sectionRef.value) return
   const targets = sectionRef.value.querySelectorAll('[data-reveal]')
