@@ -1,47 +1,20 @@
 <script setup>
-import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
-
-gsap.registerPlugin(ScrollTrigger)
 
 const sectionRef = useTemplateRef('section')
 const headingRef = useTemplateRef('heading')
 useScrollReveal(sectionRef, { stagger: 0.12 })
 useBlurTextReveal(headingRef)
 
-let matchMedia = null
-
-// `pinSpacing: false` pins this section in place while WorkSection keeps
-// scrolling normally and slides up over it like a curtain. Duration is
-// pinned to a full viewport height rather than the section's own (variable)
-// content height, so the transition reads consistently regardless of
-// stat/partner count. Shortened on mobile — a full 100% pin reads as the
-// page "getting stuck" on small screens where there's less content to fill
-// the wait.
-//
-// Both breakpoints are declared even though only `isMobile` is read: GSAP
-// runs the callback only when at least one query matches, so listing just
-// `isMobile` meant desktop matched nothing and the pin was never created.
-onMounted(() => {
-  if (!sectionRef.value) return
-  matchMedia = gsap.matchMedia()
-  matchMedia.add({ isMobile: '(max-width: 767px)', isDesktop: '(min-width: 768px)' }, (context) => {
-    ScrollTrigger.create({
-      trigger: sectionRef.value,
-      start: 'top top',
-      end: context.conditions.isMobile ? '+=60%' : '+=100%',
-      pin: true,
-      pinSpacing: false,
-    })
-  })
-})
-
-onBeforeUnmount(() => {
-  matchMedia?.revert()
-})
+// This section used to pin itself with `pinSpacing: false` so WorkSection
+// would slide up over it like a curtain. It's a plain scrolling section
+// now: holding the page still for a full viewport made the scroll feel
+// jammed, and with `pinSpacing: false` the partner row at the bottom was
+// getting covered before it had a chance to be read. The reveal and
+// heading animations below still run on scroll — they just don't take the
+// scroll position hostage to do it.
 
 // Placeholder figures — swap for real numbers before launch. (The unused
 // count-up composable that used to be referenced here was removed; add an
