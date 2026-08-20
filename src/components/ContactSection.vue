@@ -2,11 +2,19 @@
 import { reactive, ref, useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
+import { useInteractiveLineField } from '../composables/useInteractiveLineField'
 
 const sectionRef = useTemplateRef('section')
 const headingRef = useTemplateRef('heading')
+const lineFieldContainerRef = useTemplateRef('lineFieldContainer')
+const lineFieldCanvasRef = useTemplateRef('lineFieldCanvas')
 useScrollReveal(sectionRef)
 useBlurTextReveal(headingRef, { start: 'top 90%' })
+
+// Circuit-trace field behind the contact content — bends toward the cursor
+// on its own, and streams a signal pulse for as long as "Hold to Signal" is
+// held. A playful nod to "reaching out" that fits an IT/software brief.
+const { startPulse, stopPulse } = useInteractiveLineField(lineFieldCanvasRef, lineFieldContainerRef)
 
 const form = reactive({
   name: '',
@@ -51,19 +59,37 @@ const socials = [
       class="pointer-events-none absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-brand-accent/10 blur-[120px]"
     />
 
-    <div class="relative mx-auto max-w-6xl">
+    <div ref="lineFieldContainer" class="pointer-events-none absolute inset-0 z-0">
+      <canvas ref="lineFieldCanvas" class="h-full w-full" />
+    </div>
+
+    <div class="relative z-10 mx-auto max-w-6xl">
       <div class="flex flex-col gap-10 border-b border-white/10 pb-16 lg:flex-row lg:items-end lg:justify-between">
         <h2 ref="heading" class="text-display-lg max-w-2xl text-white">
           Ready to Build<br />Something Meaningful?
         </h2>
-        <a
-          data-reveal
-          href="#contact-form"
-          class="group flex items-center gap-2 border-b border-white/30 pb-1 text-sm font-medium uppercase tracking-widest text-white/80 transition-colors hover:border-white hover:text-white"
-        >
-          Start a Collaboration
-          <span class="transition-transform group-hover:translate-x-1">→</span>
-        </a>
+        <div class="flex flex-col items-start gap-4 lg:items-end">
+          <a
+            data-reveal
+            href="#contact-form"
+            class="group flex items-center gap-2 border-b border-white/30 pb-1 text-sm font-medium uppercase tracking-widest text-white/80 transition-colors hover:border-white hover:text-white"
+          >
+            Start a Collaboration
+            <span class="transition-transform group-hover:translate-x-1">→</span>
+          </a>
+          <button
+            type="button"
+            class="group flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/30 transition hover:text-brand-accent"
+            aria-label="Hold to send a signal through the trace field"
+            @pointerdown="startPulse"
+            @pointerup="stopPulse"
+            @pointerleave="stopPulse"
+            @pointercancel="stopPulse"
+          >
+            <span class="h-1.5 w-1.5 rounded-full bg-brand-accent/60 transition group-hover:bg-brand-accent group-hover:shadow-[0_0_10px_rgba(34,211,238,0.7)]" />
+            Hold to Signal
+          </button>
+        </div>
       </div>
 
       <div class="grid gap-16 py-16 lg:grid-cols-[1fr_1fr]">

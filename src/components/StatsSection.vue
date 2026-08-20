@@ -2,6 +2,7 @@
 import { useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
+import { useCountUp } from '../composables/useCountUp'
 
 const sectionRef = useTemplateRef('section')
 const headingRef = useTemplateRef('heading')
@@ -16,13 +17,21 @@ useBlurTextReveal(headingRef)
 // heading animations below still run on scroll — they just don't take the
 // scroll position hostage to do it.
 
+const foundedValueRef = useTemplateRef('foundedValue')
+const projectsValueRef = useTemplateRef('projectsValue')
+const teamValueRef = useTemplateRef('teamValue')
+
+useCountUp(foundedValueRef, { value: 2026, duration: 1.8 })
+useCountUp(projectsValueRef, { value: 2, duration: 1 })
+useCountUp(teamValueRef, { value: 2, duration: 1 })
+
 // Real figures as of Aug 2026 — small numbers on purpose, since VELTECH is
-// a month-old venture. The unused count-up composable that used to live
-// here was removed; add an animated counter back once the values stabilize.
+// a month-old venture. Each value counts up on scroll via useCountUp above;
+// refName picks which ref the animated <p> below binds to.
 const stats = [
-  { label: 'Founded', value: '2026', caption: 'Est. July 2026 — early, already delivering for Pertamina Lubricants.' },
-  { label: 'Projects Completed', value: '2', caption: 'Our first client, DSP Plumpang (Pertamina Lubricants), returned for a second project.' },
-  { label: 'Team Members', value: '2', caption: 'Sales & full-stack development.' },
+  { label: 'Founded', value: '2026', refName: 'foundedValue', caption: 'Est. July 2026 — early, already delivering for Pertamina Lubricants.' },
+  { label: 'Projects Completed', value: '2', refName: 'projectsValue', caption: 'Our first client, DSP Plumpang (Pertamina Lubricants), returned for a second project.' },
+  { label: 'Team Members', value: '2', refName: 'teamValue', caption: 'Sales & full-stack development.' },
 ]
 
 const clients = ['DSP Plumpang · Pertamina Lubricants']
@@ -47,7 +56,7 @@ const clients = ['DSP Plumpang · Pertamina Lubricants']
           class="flex flex-col justify-between rounded-3xl border border-black/5 bg-white p-8 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.25)]"
         >
           <p class="text-eyebrow text-paper-muted">{{ stat.label }}</p>
-          <p class="text-display mt-8 text-paper-ink">{{ stat.value }}</p>
+          <p :ref="stat.refName" class="text-display mt-8 text-paper-ink">0</p>
           <p v-if="stat.caption" class="mt-4 text-sm text-paper-muted">{{ stat.caption }}</p>
         </div>
       </div>

@@ -15,7 +15,7 @@ const trackRef = useTemplateRef('track')
 useMarquee(trackRef, { speed: 60 })
 
 const missionText =
-  'VELTECH is an independent IT consulting and software house building meaningful systems and digital products through strategy, software engineering, and design.'
+  "VELTECH is a two-person IT consulting and software house building custom systems for operations that can't afford to break."
 
 const words = computed(() => missionText.split(' '))
 const marqueeWords = ['INNOVATION', 'IMPACT', 'INSPIRATION', 'INTEGRITY']
@@ -63,8 +63,8 @@ onBeforeUnmount(() => {
   <section id="about" ref="section" class="relative min-h-[130vh] overflow-x-clip bg-paper-100">
     <div class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pt-16 pb-16 lg:sticky lg:top-16">
       <div ref="eyebrow" class="text-eyebrow max-w-xs text-paper-muted">
-        We Design for Long-Term Resilience.<br />
-        Clarity First, Quality Always, Built to Scale.
+        Small Team, Direct Line to the Build.<br />
+        No Account Managers Between You and the Code.
       </div>
 
       <p ref="words" class="text-display max-w-5xl text-paper-ink">
@@ -73,8 +73,9 @@ onBeforeUnmount(() => {
 
       <div ref="mission" class="ml-auto flex max-w-sm flex-col items-start gap-6 text-right sm:text-left">
         <p class="text-paper-muted">
-          Our mission is to make technology feel human — designing digital products that
-          are intuitive, purposeful, and meaningful to their users.
+          We're a two-person software house: one of us listens to what you need, the other
+          builds it. No relay race between departments — just a system that does what you
+          actually asked for.
         </p>
         <a href="#work" class="group flex items-center gap-2 border-b border-paper-ink/30 pb-1 text-sm font-medium text-paper-ink/80 transition-colors hover:border-paper-ink hover:text-paper-ink">
           More About Us

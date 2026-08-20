@@ -22,7 +22,7 @@ useDarkClusterV(clusterCanvasRef, clusterContainerRef)
 // the `word-glitch` keyframes below) — the cycling copy names concrete
 // qualities of the systems VELTECH ships, and the glitch cut stands in for
 // a system compiling/resolving rather than a plain crossfade.
-const words = ['purpose', 'depth', 'clarity', 'impact', 'scale']
+const words = ['scale', 'last', 'ship', 'adapt', 'grow']
 const wordIndex = ref(0)
 let wordInterval = null
 
@@ -82,8 +82,7 @@ onBeforeUnmount(() => {
         data-reveal
         class="mt-4 max-w-xl font-heading text-[clamp(2.25rem,5.5vw,4.5rem)] font-semibold leading-[0.95] tracking-[-0.01em] text-white"
       >
-        Designed to<br />
-        mean
+        Built to<br />
         <Transition name="word-glitch" mode="out-in">
           <span :key="words[wordIndex]" class="inline-block text-white/40 blur-sm select-none">{{ words[wordIndex] }}</span>
         </Transition>
