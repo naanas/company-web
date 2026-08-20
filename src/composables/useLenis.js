@@ -7,6 +7,9 @@ gsap.registerPlugin(ScrollTrigger)
 
 let lenis = null
 let refCount = 0
+let tickerFn = null
+let programmaticDepth = 0
+let programmaticTimer = null
 
 /**
  * Boots a single shared Lenis instance and hands its scroll tick to GSAP's
@@ -30,15 +33,24 @@ export function useLenis() {
 
     lenis.on('scroll', ScrollTrigger.update)
 
-    gsap.ticker.add((time) => {
+    // Kept in a module-scoped handle so it can actually be removed again —
+    // an anonymous callback here would stay on gsap.ticker forever, driving
+    // (and holding a reference to) a Lenis instance that's already destroyed,
+    // and would stack a second copy on every remount.
+    tickerFn = (time) => {
       lenis?.raf(time * 1000)
-    })
+    }
+    gsap.ticker.add(tickerFn)
     gsap.ticker.lagSmoothing(0)
   })
 
   onBeforeUnmount(() => {
     refCount -= 1
     if (refCount <= 0 && lenis) {
+      if (tickerFn) gsap.ticker.remove(tickerFn)
+      tickerFn = null
+      clearTimeout(programmaticTimer)
+      programmaticDepth = 0
       lenis.destroy()
       lenis = null
     }
@@ -47,5 +59,38 @@ export function useLenis() {
 
 /** Scrolls to a target (selector, element, or Y offset) using the shared Lenis instance. */
 export function lenisScrollTo(target, options = {}) {
-  lenis?.scrollTo(target, options)
+  if (!lenis) return
+
+  const { duration = 1.2, onComplete, ...rest } = options
+
+  programmaticDepth += 1
+  const release = () => {
+    programmaticDepth = Math.max(0, programmaticDepth - 1)
+  }
+
+  // Belt and braces: Lenis skips `onComplete` when the user interrupts the
+  // animation with their own wheel/touch input, which would otherwise leave
+  // the flag stuck on and permanently suppress anything gated on it.
+  clearTimeout(programmaticTimer)
+  programmaticTimer = setTimeout(() => {
+    programmaticDepth = 0
+  }, duration * 1000 + 250)
+
+  lenis.scrollTo(target, {
+    ...rest,
+    duration,
+    onComplete: (instance) => {
+      release()
+      onComplete?.(instance)
+    },
+  })
+}
+
+/**
+ * True while a `lenisScrollTo` animation is running. Lets scroll-direction
+ * reactions (e.g. the navbar auto-hide) ignore movement the page caused
+ * itself rather than treating it as the user scrolling away.
+ */
+export function isProgrammaticScroll() {
+  return programmaticDepth > 0
 }

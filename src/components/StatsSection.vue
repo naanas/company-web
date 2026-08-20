@@ -21,10 +21,14 @@ let matchMedia = null
 // stat/partner count. Shortened on mobile — a full 100% pin reads as the
 // page "getting stuck" on small screens where there's less content to fill
 // the wait.
+//
+// Both breakpoints are declared even though only `isMobile` is read: GSAP
+// runs the callback only when at least one query matches, so listing just
+// `isMobile` meant desktop matched nothing and the pin was never created.
 onMounted(() => {
   if (!sectionRef.value) return
   matchMedia = gsap.matchMedia()
-  matchMedia.add({ isMobile: '(max-width: 767px)' }, (context) => {
+  matchMedia.add({ isMobile: '(max-width: 767px)', isDesktop: '(min-width: 768px)' }, (context) => {
     ScrollTrigger.create({
       trigger: sectionRef.value,
       start: 'top top',
@@ -39,8 +43,9 @@ onBeforeUnmount(() => {
   matchMedia?.revert()
 })
 
-// Placeholder figures — swap for real numbers, then wire each value up to
-// `useCountUp(elRef, { value })` for the same animated count-up trionn uses.
+// Placeholder figures — swap for real numbers before launch. (The unused
+// count-up composable that used to be referenced here was removed; add an
+// animated counter back alongside the real figures if one is wanted.)
 const stats = [
   { label: 'Years of Experience', value: 'XX+' },
   { label: 'Projects Completed', value: 'XX+', caption: 'XX% of our clients return for a second project.' },

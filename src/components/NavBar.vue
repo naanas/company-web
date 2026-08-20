@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { isProgrammaticScroll } from '../composables/useLenis'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -18,6 +19,7 @@ const links = [
 
 let sectionTriggers = []
 let hideTrigger = null
+let isHidden = false
 
 onMounted(() => {
   if (!headerRef.value) return
@@ -27,11 +29,24 @@ onMounted(() => {
   // Slide the bar off-screen while scrolling down past the hero, bring it
   // back on any upward scroll — the usual "get out of the way while
   // reading, reappear when the user wants to navigate" nav pattern.
+  //
+  // Only acts on an actual change of direction: `onUpdate` fires every
+  // scroll frame, so tweening unconditionally spawned (and `overwrite`-killed)
+  // a fresh tween dozens of times per second for no visual difference.
+  // Programmatic scrolls are ignored outright — clicking a nav link scrolls
+  // down, which used to hide the very bar the user just reached for. Same
+  // for while the mobile menu is open, since hiding the header takes the
+  // open menu with it.
   hideTrigger = ScrollTrigger.create({
     start: 'top -120',
     end: 99999,
     onUpdate: (self) => {
+      if (isProgrammaticScroll() || isOpen.value) return
+
       const goingDown = self.direction === 1
+      if (goingDown === isHidden) return
+      isHidden = goingDown
+
       gsap.to(headerRef.value, {
         y: goingDown ? -120 : 0,
         autoAlpha: goingDown ? 0 : 1,
