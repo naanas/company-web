@@ -13,6 +13,12 @@ gsap.registerPlugin(ScrollTrigger)
  * 150%-viewport pin with a strong zoom reads as dramatic depth on desktop,
  * but on mobile that same long pin is mostly jank (weaker GPUs, address-bar
  * resize jitter) for a cue smaller screens don't read as clearly anyway.
+ *
+ * Both breakpoints are declared even though only `isMobile` is read: GSAP
+ * only invokes the callback when at least one query in the object matches
+ * (see `anyMatch` in gsap-core's `_onMediaChange`). With `isMobile` alone,
+ * every viewport ≥768px matched nothing, so the callback never ran and
+ * desktop silently got no pin and no zoom at all.
  */
 export function useScrollZoom(zoomRef, bgRef, triggerRef) {
   let matchMedia = null
@@ -21,7 +27,7 @@ export function useScrollZoom(zoomRef, bgRef, triggerRef) {
     if (!zoomRef.value || !triggerRef.value) return
 
     matchMedia = gsap.matchMedia()
-    matchMedia.add({ isMobile: '(max-width: 767px)' }, (context) => {
+    matchMedia.add({ isMobile: '(max-width: 767px)', isDesktop: '(min-width: 768px)' }, (context) => {
       const { isMobile } = context.conditions
 
       const timeline = gsap.timeline({

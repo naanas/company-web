@@ -55,7 +55,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section id="about" ref="section" class="relative min-h-[130vh] overflow-hidden bg-paper-100">
+  <!-- `overflow-x-clip` rather than `overflow-hidden`: `hidden` makes this
+       section a scroll container, which silently cancels the `lg:sticky`
+       on the block below (sticky resolves against its nearest scrollport,
+       and this one never scrolls). `clip` still crops horizontally for the
+       marquee without creating that scrollport. -->
+  <section id="about" ref="section" class="relative min-h-[130vh] overflow-x-clip bg-paper-100">
     <div class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pt-16 pb-16 lg:sticky lg:top-16">
       <div ref="eyebrow" class="text-eyebrow max-w-xs text-paper-muted">
         We Design for Long-Term Resilience.<br />
