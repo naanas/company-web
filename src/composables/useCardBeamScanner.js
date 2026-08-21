@@ -37,14 +37,11 @@ function charsToFill(layer) {
 export function useCardBeamScanner(trackRef, scannerRef) {
   let ticker = null
   let glitchInterval = null
+  let visibilityObserver = null
 
-  onMounted(() => {
-    if (!trackRef.value || !scannerRef.value) return
-
+  function startLoop() {
+    if (ticker) return
     const codeLayers = trackRef.value.querySelectorAll('[data-code-layer]')
-    codeLayers.forEach((el) => {
-      el.textContent = randomCode(charsToFill(el))
-    })
 
     glitchInterval = setInterval(() => {
       codeLayers.forEach((el) => {
@@ -68,10 +65,40 @@ export function useCardBeamScanner(trackRef, scannerRef) {
       })
     }
     gsap.ticker.add(ticker)
+  }
+
+  function stopLoop() {
+    if (ticker) gsap.ticker.remove(ticker)
+    ticker = null
+    if (glitchInterval) clearInterval(glitchInterval)
+    glitchInterval = null
+  }
+
+  onMounted(() => {
+    if (!trackRef.value || !scannerRef.value) return
+
+    const codeLayers = trackRef.value.querySelectorAll('[data-code-layer]')
+    codeLayers.forEach((el) => {
+      el.textContent = randomCode(charsToFill(el))
+    })
+
+    // Forced layout reads (getBoundingClientRect) on every card, every
+    // frame, add up to real jank once they're running whether or not the
+    // section is on screen — gate the loop the same way the hero cluster
+    // and contact line field already do, so it only costs anything while
+    // the card stream is actually visible.
+    visibilityObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) startLoop()
+        else stopLoop()
+      },
+      { rootMargin: '200px' }
+    )
+    visibilityObserver.observe(trackRef.value)
   })
 
   onBeforeUnmount(() => {
-    if (ticker) gsap.ticker.remove(ticker)
-    if (glitchInterval) clearInterval(glitchInterval)
+    visibilityObserver?.disconnect()
+    stopLoop()
   })
 }

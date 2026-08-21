@@ -4,6 +4,7 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useMarquee } from '../composables/useMarquee'
 import { useStripeReveal } from '../composables/useStripeReveal'
+import { whenIdle } from '../composables/useIdle'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -23,35 +24,43 @@ const words = computed(() => missionText.split(' '))
 const marqueeWords = ['INNOVATION', 'IMPACT', 'INSPIRATION', 'INTEGRITY']
 
 let scrollTrigger = null
+let alive = true
 
 // The intro line, the word-by-word mission scrub, and the mission/link block
 // all read off one shared scroll-linked timeline instead of separate
 // ScrollTriggers with their own start/end math — keeps all three locked to
 // the same scroll position across this section's sticky range rather than
 // risking drift between independently-tuned triggers.
+//
+// Deferred to idle time — this section is below the fold at mount, so
+// there's no rush, and building it eagerly just meant competing with the
+// hero's own entrance animation (and its WebGPU init) for the main thread.
 onMounted(() => {
-  if (!sectionRef.value || !eyebrowRef.value || !wordsRef.value || !missionRef.value) return
+  whenIdle(() => {
+    if (!alive || !sectionRef.value || !eyebrowRef.value || !wordsRef.value || !missionRef.value) return
 
-  const wordEls = wordsRef.value.querySelectorAll('[data-word]')
+    const wordEls = wordsRef.value.querySelectorAll('[data-word]')
 
-  const timeline = gsap.timeline({
-    scrollTrigger: {
-      trigger: sectionRef.value,
-      start: 'top 85%',
-      end: 'bottom 60%',
-      scrub: 0.5,
-    },
+    const timeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.value,
+        start: 'top 85%',
+        end: 'bottom 60%',
+        scrub: 0.5,
+      },
+    })
+
+    timeline
+      .fromTo(eyebrowRef.value, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, ease: 'power3.out' }, 0)
+      .fromTo(missionRef.value, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, ease: 'power3.out' }, 0.05)
+      .fromTo(wordEls, { opacity: 0.15 }, { opacity: 1, stagger: 0.5, ease: 'none' }, 0.15)
+
+    scrollTrigger = timeline.scrollTrigger
   })
-
-  timeline
-    .fromTo(eyebrowRef.value, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, ease: 'power3.out' }, 0)
-    .fromTo(missionRef.value, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, ease: 'power3.out' }, 0.05)
-    .fromTo(wordEls, { opacity: 0.15 }, { opacity: 1, stagger: 0.5, ease: 'none' }, 0.15)
-
-  scrollTrigger = timeline.scrollTrigger
 })
 
 onBeforeUnmount(() => {
+  alive = false
   scrollTrigger?.kill()
 })
 </script>

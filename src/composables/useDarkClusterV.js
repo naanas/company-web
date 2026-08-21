@@ -292,7 +292,15 @@ export function useDarkClusterV(canvasRef, containerRef) {
     // than fighting the post-processing pipeline for alpha compositing, and
     // this canvas is the hero's sole background layer now anyway, so there's
     // nothing beneath it that needs to show through.
-    renderer = new THREE.WebGPURenderer({ canvas: canvasRef.value, antialias: true })
+    //
+    // `antialias: false` — the Sobel edge-detect + Bayer dithering pass below
+    // already breaks every edge into a stylized dithered pattern, so MSAA'd
+    // smooth edges get dithered right back into jagged ones; it was paying
+    // for a smoothing step the final look throws away. Dropping it cuts both
+    // pipeline-compile time (part of the hero's on-load stutter) and
+    // per-frame render cost, with no visible difference in the dithered
+    // output.
+    renderer = new THREE.WebGPURenderer({ canvas: canvasRef.value, antialias: false })
     renderer.setClearColor(0x060607, 1)
     await renderer.init()
 

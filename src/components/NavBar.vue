@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { isProgrammaticScroll } from '../composables/useLenis'
+import { whenIdle } from '../composables/useIdle'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -27,52 +28,61 @@ onMounted(() => {
 
   gsap.fromTo(headerRef.value, { y: -100, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1, ease: 'power3.out', delay: 0.1 })
 
-  // Slide the bar off-screen while scrolling down past the hero, bring it
-  // back on any upward scroll — the usual "get out of the way while
-  // reading, reappear when the user wants to navigate" nav pattern.
-  //
-  // Only acts on an actual change of direction: `onUpdate` fires every
-  // scroll frame, so tweening unconditionally spawned (and `overwrite`-killed)
-  // a fresh tween dozens of times per second for no visual difference.
-  // Programmatic scrolls are ignored outright — clicking a nav link scrolls
-  // down, which used to hide the very bar the user just reached for. Same
-  // for while the mobile menu is open, since hiding the header takes the
-  // open menu with it.
-  hideTrigger = ScrollTrigger.create({
-    start: 'top -120',
-    end: 99999,
-    onUpdate: (self) => {
-      if (isProgrammaticScroll() || isOpen.value) return
+  // The ScrollTrigger setup below doesn't need to be ready before the user
+  // actually scrolls, so it's deferred to idle time — doing it eagerly here
+  // meant it competed with the hero's own entrance animation (and its
+  // WebGPU init) for the main thread right as the page loads. See
+  // useIdle.js.
+  whenIdle(() => {
+    if (!headerRef.value) return
 
-      const goingDown = self.direction === 1
-      if (goingDown === isHidden) return
-      isHidden = goingDown
+    // Slide the bar off-screen while scrolling down past the hero, bring it
+    // back on any upward scroll — the usual "get out of the way while
+    // reading, reappear when the user wants to navigate" nav pattern.
+    //
+    // Only acts on an actual change of direction: `onUpdate` fires every
+    // scroll frame, so tweening unconditionally spawned (and `overwrite`-killed)
+    // a fresh tween dozens of times per second for no visual difference.
+    // Programmatic scrolls are ignored outright — clicking a nav link scrolls
+    // down, which used to hide the very bar the user just reached for. Same
+    // for while the mobile menu is open, since hiding the header takes the
+    // open menu with it.
+    hideTrigger = ScrollTrigger.create({
+      start: 'top -120',
+      end: 99999,
+      onUpdate: (self) => {
+        if (isProgrammaticScroll() || isOpen.value) return
 
-      gsap.to(headerRef.value, {
-        y: goingDown ? -120 : 0,
-        autoAlpha: goingDown ? 0 : 1,
-        duration: 0.4,
-        ease: 'power2.out',
-        overwrite: true,
-      })
-    },
-  })
+        const goingDown = self.direction === 1
+        if (goingDown === isHidden) return
+        isHidden = goingDown
 
-  // Track which section is currently in view to highlight its nav link —
-  // '#hero' included so the logo/home state is correct before scrolling.
-  ;['#hero', ...links.map((l) => l.href)].forEach((href) => {
-    const el = document.querySelector(href)
-    if (!el) return
-    sectionTriggers.push(
-      ScrollTrigger.create({
-        trigger: el,
-        start: 'top 55%',
-        end: 'bottom 55%',
-        onToggle: (self) => {
-          if (self.isActive) activeHref.value = href
-        },
-      })
-    )
+        gsap.to(headerRef.value, {
+          y: goingDown ? -120 : 0,
+          autoAlpha: goingDown ? 0 : 1,
+          duration: 0.4,
+          ease: 'power2.out',
+          overwrite: true,
+        })
+      },
+    })
+
+    // Track which section is currently in view to highlight its nav link —
+    // '#hero' included so the logo/home state is correct before scrolling.
+    ;['#hero', ...links.map((l) => l.href)].forEach((href) => {
+      const el = document.querySelector(href)
+      if (!el) return
+      sectionTriggers.push(
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 55%',
+          end: 'bottom 55%',
+          onToggle: (self) => {
+            if (self.isActive) activeHref.value = href
+          },
+        })
+      )
+    })
   })
 })
 

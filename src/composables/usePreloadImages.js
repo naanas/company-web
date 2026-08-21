@@ -1,6 +1,5 @@
 import { onMounted } from 'vue'
-
-const requestIdle = window.requestIdleCallback ?? ((cb) => setTimeout(() => cb({ timeRemaining: () => 0 }), 200))
+import { whenIdle } from './useIdle'
 
 /**
  * Decodes `urls` off-thread during browser idle time so the decode cost
@@ -11,7 +10,7 @@ const requestIdle = window.requestIdleCallback ?? ((cb) => setTimeout(() => cb({
  */
 export function usePreloadImages(urls) {
   onMounted(() => {
-    requestIdle(() => {
+    whenIdle(() => {
       urls.forEach((url) => {
         const img = new Image()
         img.src = url

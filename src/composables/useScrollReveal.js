@@ -1,6 +1,7 @@
 import { onMounted, onBeforeUnmount } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { whenIdle } from './useIdle'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -27,41 +28,49 @@ export function useScrollReveal(targetRef, options = {}) {
   } = options
 
   let triggers = []
+  let alive = true
 
   onMounted(() => {
-    if (!targetRef.value) return
+    // Deferred to idle time: this section is below the fold at mount, so
+    // there's no rush to have its ScrollTrigger ready immediately — doing
+    // it eagerly just means competing with the hero's own entrance
+    // animation for the main thread. See useIdle.js.
+    whenIdle(() => {
+      if (!alive || !targetRef.value) return
 
-    const root = targetRef.value
-    const els = root.querySelectorAll(selector)
-    const targets = els.length ? els : [root]
+      const root = targetRef.value
+      const els = root.querySelectorAll(selector)
+      const targets = els.length ? els : [root]
 
-    if (reduceMotionQuery.matches) {
-      gsap.set(targets, { autoAlpha: 1, x: 0, y: 0 })
-      return
-    }
-
-    const anim = gsap.fromTo(
-      targets,
-      { autoAlpha: 0, x, y },
-      {
-        autoAlpha: 1,
-        x: 0,
-        y: 0,
-        duration,
-        stagger,
-        ease: 'power3.out',
-        scrollTrigger: {
-          trigger: root,
-          start,
-          toggleActions: 'play none none reverse',
-        },
+      if (reduceMotionQuery.matches) {
+        gsap.set(targets, { autoAlpha: 1, x: 0, y: 0 })
+        return
       }
-    )
 
-    if (anim.scrollTrigger) triggers.push(anim.scrollTrigger)
+      const anim = gsap.fromTo(
+        targets,
+        { autoAlpha: 0, x, y },
+        {
+          autoAlpha: 1,
+          x: 0,
+          y: 0,
+          duration,
+          stagger,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: root,
+            start,
+            toggleActions: 'play none none reverse',
+          },
+        }
+      )
+
+      if (anim.scrollTrigger) triggers.push(anim.scrollTrigger)
+    })
   })
 
   onBeforeUnmount(() => {
+    alive = false
     triggers.forEach((t) => t.kill())
     triggers = []
   })

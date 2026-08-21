@@ -153,7 +153,7 @@ const socials = [
             <a :href="`mailto:${contact.email}`" class="mt-3 block text-lg text-white transition hover:text-brand-accent">
               {{ contact.email }}
             </a>
-            <a :href="`tel:${contact.phone.replace(/\\s|-/g, '')}`" class="mt-1 block text-lg text-white transition hover:text-brand-accent">
+            <a :href="`tel:${contact.phone.replace(/\s|-/g, '')}`" class="mt-1 block text-lg text-white transition hover:text-brand-accent">
               {{ contact.phone }}
             </a>
           </div>

@@ -1,5 +1,6 @@
 import { onMounted, onBeforeUnmount } from 'vue'
 import { gsap } from 'gsap'
+import { whenIdle } from './useIdle'
 
 /**
  * Infinite horizontal marquee. Expects `trackRef` to contain the marquee
@@ -53,17 +54,24 @@ export function useMarquee(trackRef, { speed = 40, direction = -1 } = {}) {
   onMounted(() => {
     if (!trackRef.value) return
 
-    build()
-    // Re-measure once the real fonts are in — see the note above.
-    document.fonts?.ready.then(build)
+    // Deferred to idle time — this track is below the fold at mount, so
+    // measuring/building it eagerly just competes with the hero's own
+    // entrance animation for the main thread. See useIdle.js.
+    whenIdle(() => {
+      if (!trackRef.value) return
 
-    resizeObserver = new ResizeObserver(build)
-    resizeObserver.observe(trackRef.value)
+      build()
+      // Re-measure once the real fonts are in — see the note above.
+      document.fonts?.ready.then(build)
 
-    onEnter = () => tween?.timeScale(0.25)
-    onLeave = () => tween?.timeScale(1)
-    trackRef.value.addEventListener('mouseenter', onEnter)
-    trackRef.value.addEventListener('mouseleave', onLeave)
+      resizeObserver = new ResizeObserver(build)
+      resizeObserver.observe(trackRef.value)
+
+      onEnter = () => tween?.timeScale(0.25)
+      onLeave = () => tween?.timeScale(1)
+      trackRef.value.addEventListener('mouseenter', onEnter)
+      trackRef.value.addEventListener('mouseleave', onLeave)
+    })
   })
 
   onBeforeUnmount(() => {

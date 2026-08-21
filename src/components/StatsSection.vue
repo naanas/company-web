@@ -1,5 +1,5 @@
 <script setup>
-import { useTemplateRef } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
 import { useCountUp } from '../composables/useCountUp'
@@ -19,9 +19,17 @@ useStripeReveal(sectionRef)
 // heading animations below still run on scroll — they just don't take the
 // scroll position hostage to do it.
 
-const foundedValueRef = useTemplateRef('foundedValue')
-const projectsValueRef = useTemplateRef('projectsValue')
-const teamValueRef = useTemplateRef('teamValue')
+// Plain refs assigned through a function `:ref` below rather than
+// `useTemplateRef` — Vue compiles *any* ref binding inside `v-for` with
+// "ref_for" semantics (even though each stat here uses a distinct,
+// non-repeating key), which routes the assignment through machinery meant
+// for array-of-elements refs and silently no-ops writes to `.value`
+// (surfacing as a "target is readonly" warning) instead of storing the
+// element — so the count-up below never had an element to animate.
+const foundedValueRef = ref(null)
+const projectsValueRef = ref(null)
+const teamValueRef = ref(null)
+const statRefs = { foundedValue: foundedValueRef, projectsValue: projectsValueRef, teamValue: teamValueRef }
 
 useCountUp(foundedValueRef, { value: 2026, duration: 1.8 })
 useCountUp(projectsValueRef, { value: 2, duration: 1 })
@@ -58,7 +66,7 @@ const clients = ['DSP Plumpang · Pertamina Lubricants']
           class="flex flex-col justify-between rounded-3xl border border-black/5 bg-white p-8 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.25)]"
         >
           <p class="text-eyebrow text-paper-muted">{{ stat.label }}</p>
-          <p :ref="stat.refName" class="text-display mt-8 text-paper-ink">0</p>
+          <p :ref="(el) => (statRefs[stat.refName].value = el)" class="text-display mt-8 text-paper-ink">0</p>
           <p v-if="stat.caption" class="mt-4 text-sm text-paper-muted">{{ stat.caption }}</p>
         </div>
       </div>

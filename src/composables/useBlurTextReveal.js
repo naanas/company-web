@@ -2,6 +2,7 @@ import { onBeforeUnmount, onMounted } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
+import { whenIdle } from './useIdle'
 
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
@@ -20,9 +21,10 @@ export function useBlurTextReveal(targetRef, options = {}) {
   let split = null
   let anim = null
   let trigger = null
+  let alive = true
 
   function build() {
-    if (!targetRef.value) return
+    if (!alive || !targetRef.value) return
 
     split = new SplitText(targetRef.value, { type })
     const targets = split[type] ?? split.words
@@ -67,13 +69,19 @@ export function useBlurTextReveal(targetRef, options = {}) {
 
   onMounted(() => {
     // Wait for webfonts so SplitText measures final line/word metrics
-    // instead of the fallback font's layout.
+    // instead of the fallback font's layout, then defer the actual
+    // split/animate work to idle time — this section is below the fold at
+    // mount, so there's no rush, and doing it eagerly just means competing
+    // with the hero's own entrance animation for the main thread.
     if (document.fonts?.ready) {
-      document.fonts.ready.then(build)
+      document.fonts.ready.then(() => whenIdle(build))
     } else {
-      build()
+      whenIdle(build)
     }
   })
 
-  onBeforeUnmount(cleanup)
+  onBeforeUnmount(() => {
+    alive = false
+    cleanup()
+  })
 }
