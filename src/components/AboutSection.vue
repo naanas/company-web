@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useMarquee } from '../composables/useMarquee'
+import { useStripeReveal } from '../composables/useStripeReveal'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -13,6 +14,7 @@ const missionRef = useTemplateRef('mission')
 const trackRef = useTemplateRef('track')
 
 useMarquee(trackRef, { speed: 60 })
+useStripeReveal(sectionRef)
 
 const missionText =
   "VELTECH is a two-person IT consulting and software house building custom systems for operations that can't afford to break."

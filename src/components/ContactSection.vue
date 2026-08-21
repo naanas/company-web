@@ -3,6 +3,7 @@ import { reactive, ref, useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
 import { useInteractiveLineField } from '../composables/useInteractiveLineField'
+import { useStripeReveal } from '../composables/useStripeReveal'
 
 const sectionRef = useTemplateRef('section')
 const headingRef = useTemplateRef('heading')
@@ -10,6 +11,7 @@ const lineFieldContainerRef = useTemplateRef('lineFieldContainer')
 const lineFieldCanvasRef = useTemplateRef('lineFieldCanvas')
 useScrollReveal(sectionRef)
 useBlurTextReveal(headingRef, { start: 'top 90%' })
+useStripeReveal(sectionRef)
 
 // Circuit-trace field behind the contact content — bends toward the cursor
 // on its own, and streams a signal pulse for as long as "Hold to Signal" is

@@ -3,11 +3,13 @@ import { useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
 import { useCountUp } from '../composables/useCountUp'
+import { useStripeReveal } from '../composables/useStripeReveal'
 
 const sectionRef = useTemplateRef('section')
 const headingRef = useTemplateRef('heading')
 useScrollReveal(sectionRef, { stagger: 0.12 })
 useBlurTextReveal(headingRef)
+useStripeReveal(sectionRef)
 
 // This section used to pin itself with `pinSpacing: false` so WorkSection
 // would slide up over it like a curtain. It's a plain scrolling section

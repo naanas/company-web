@@ -12,6 +12,7 @@ const headerRef = useTemplateRef('header')
 
 const links = [
   { label: 'About', href: '#about' },
+  { label: 'Services', href: '#services' },
   { label: 'Our Clients', href: '#work' },
   { label: 'Process', href: '#process' },
   { label: 'Contact', href: '#contact' },

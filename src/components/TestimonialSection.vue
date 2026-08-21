@@ -1,9 +1,11 @@
 <script setup>
 import { ref, useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
+import { useStripeReveal } from '../composables/useStripeReveal'
 
 const sectionRef = useTemplateRef('section')
 useScrollReveal(sectionRef)
+useStripeReveal(sectionRef)
 
 // Placeholder testimonials — swap in real client quotes, names, and roles
 // once available. Kept obviously generic so nothing here reads as a real

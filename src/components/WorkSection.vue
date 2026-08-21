@@ -5,6 +5,7 @@ import { useMarquee } from '../composables/useMarquee'
 import { useCardBeamScanner } from '../composables/useCardBeamScanner'
 import { usePreloadImages } from '../composables/usePreloadImages'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
+import { useStripeReveal } from '../composables/useStripeReveal'
 import erpThumb from '../assets/images/projects/erp.svg'
 import mobileThumb from '../assets/images/projects/mobile.svg'
 import ecommerceThumb from '../assets/images/projects/ecommerce.svg'
@@ -19,6 +20,7 @@ useScrollReveal(sectionRef, { selector: '[data-reveal-head]' })
 useBlurTextReveal(headingRef)
 useMarquee(trackRef, { speed: 70 })
 useCardBeamScanner(trackRef, scannerRef)
+useStripeReveal(sectionRef)
 
 // Illustrative examples of the kind of systems VELTECH builds — replace
 // `image` with real project screenshots once available.

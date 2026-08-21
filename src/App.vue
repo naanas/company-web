@@ -2,6 +2,7 @@
 import NavBar from './components/NavBar.vue'
 import HeroSection from './components/HeroSection.vue'
 import AboutSection from './components/AboutSection.vue'
+import ServicesSection from './components/ServicesSection.vue'
 import StatsSection from './components/StatsSection.vue'
 import WorkSection from './components/WorkSection.vue'
 import ProcessSection from './components/ProcessSection.vue'
@@ -22,6 +23,7 @@ useSmoothAnchorScroll()
   <main>
     <HeroSection />
     <AboutSection />
+    <ServicesSection />
     <StatsSection />
     <WorkSection />
     <ProcessSection />
