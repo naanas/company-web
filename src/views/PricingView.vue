@@ -6,16 +6,18 @@ import ContactSection from '../components/ContactSection.vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
 import { services } from '../data/services'
-import { getPricingForService, includedEverywhere, pricingFactors } from '../data/pricing'
+import { getPricingForService, includedEverywhere, infrastructure, pricingFactors } from '../data/pricing'
 
 const headerRef = useTemplateRef('header')
 const headingRef = useTemplateRef('heading')
 const factorsRef = useTemplateRef('factors')
 const includedRef = useTemplateRef('included')
+const infraRef = useTemplateRef('infra')
 
 useScrollReveal(headerRef, { y: 28, stagger: 0.08 })
 useScrollReveal(factorsRef, { y: 28, stagger: 0.08 })
 useScrollReveal(includedRef, { y: 28, stagger: 0.08 })
+useScrollReveal(infraRef, { y: 28, stagger: 0.08 })
 useBlurTextReveal(headingRef)
 
 // Only list services that actually have tiers defined, so adding a fifth
@@ -88,6 +90,36 @@ const priced = services
           >
             <span aria-hidden="true" class="text-2xl leading-none text-brand-accent">+</span>
             <span class="text-sm leading-relaxed text-slate-300">{{ item }}</span>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Domain and hosting broken out at real cost. A client can check these
+         against any Indonesian registrar in a minute, so publishing them is
+         cheap to do and expensive to fake — which is the point. -->
+    <section ref="infra" class="bg-brand-950 px-6 pb-24">
+      <div class="mx-auto max-w-6xl border-t border-white/10 pt-16">
+        <p data-reveal class="text-eyebrow text-brand-accent">Domain & Hosting</p>
+        <h2 data-reveal class="font-heading mt-4 max-w-2xl text-2xl font-medium text-white sm:text-3xl">
+          Billed at cost, never marked up
+        </h2>
+        <p data-reveal class="mt-4 max-w-2xl text-sm leading-relaxed text-slate-400">
+          {{ infrastructure.note }}
+        </p>
+
+        <ul data-reveal class="mt-10 overflow-hidden rounded-3xl border border-white/10">
+          <li
+            v-for="(item, i) in infrastructure.items"
+            :key="item.label"
+            class="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-6 py-5 sm:px-8"
+            :class="i % 2 ? 'bg-brand-950' : 'bg-brand-900/60'"
+          >
+            <span class="text-sm text-slate-300">{{ item.label }}</span>
+            <span class="flex items-baseline gap-2">
+              <span class="font-heading text-base text-white">{{ item.cost }}</span>
+              <span class="text-xs uppercase tracking-widest text-white/40">{{ item.unit }}</span>
+            </span>
           </li>
         </ul>
       </div>

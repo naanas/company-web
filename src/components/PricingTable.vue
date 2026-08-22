@@ -7,7 +7,7 @@
  */
 import { useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
-import { PRICES_ARE_PLACEHOLDER, includedEverywhere } from '../data/pricing'
+import { includedEverywhere } from '../data/pricing'
 
 defineProps({
   tiers: { type: Array, required: true },
@@ -23,17 +23,16 @@ useScrollReveal(rootRef, { y: 28, stagger: 0.08 })
 
 <template>
   <div ref="root">
-    <!-- Visible for as long as data/pricing.js says the figures are stand-ins.
-         Keeping this in the UI (rather than only in a code comment) is what
-         stops placeholder numbers from quietly reading as real quotes. -->
+    <!-- Every figure in data/pricing.js is a floor, not a fixed total. Saying
+         so on the table itself — not only in the small print — is what keeps
+         a starting price from being read as a quote for unscoped work. -->
     <p
-      v-if="PRICES_ARE_PLACEHOLDER"
       data-reveal
       class="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-brand-accent/30 bg-brand-accent/5 px-5 py-4 text-sm text-brand-accent"
     >
-      <span class="font-medium">Indicative only.</span>
+      <span class="font-medium">Starting prices.</span>
       <span class="text-brand-accent/80">
-        These figures are placeholders while we finalise published rates — ask us for a quote scoped to your project.
+        Your final figure is fixed in writing once we've scoped the work — see what moves it below.
       </span>
     </p>
 
@@ -56,14 +55,23 @@ useScrollReveal(rootRef, { y: 28, stagger: 0.08 })
         </div>
 
         <div>
+          <p v-if="tier.from" class="text-xs uppercase tracking-widest text-white/40">From</p>
           <!-- `whitespace-nowrap` keeps the currency prefix on the same line
                as the figure — three tiers to a row leaves each card narrow
                enough that "Rp" was otherwise orphaned above its own number. -->
-          <p class="font-heading whitespace-nowrap text-2xl font-semibold text-white sm:text-3xl">{{ tier.price }}</p>
+          <p class="font-heading mt-1 whitespace-nowrap text-2xl font-semibold text-white sm:text-3xl">
+            {{ tier.price }}
+          </p>
           <p class="mt-1 text-xs uppercase tracking-widest text-white/40">{{ tier.unit }}</p>
         </div>
 
         <p class="text-sm leading-relaxed text-slate-400">{{ tier.blurb }}</p>
+
+        <!-- The one caveat that matters most for this tier — what's credited
+             back, what's rolling monthly, what real infrastructure cost is
+             covered. Kept out of the feature list so it doesn't read as
+             another bullet the client has to weigh. -->
+        <p v-if="tier.note" class="-mt-2 text-xs leading-relaxed text-brand-accent/70">{{ tier.note }}</p>
 
         <ul class="flex flex-col gap-3 border-t border-white/10 pt-6">
           <li v-for="item in tier.includes" :key="item" class="flex gap-3 text-sm text-slate-300">
