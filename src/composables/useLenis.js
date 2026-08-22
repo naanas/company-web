@@ -94,3 +94,15 @@ export function lenisScrollTo(target, options = {}) {
 export function isProgrammaticScroll() {
   return programmaticDepth > 0
 }
+
+/**
+ * Suspends/resumes the shared Lenis instance — for modal-style overlays
+ * (e.g. the Our Process zoom card) where the page underneath must stop
+ * scrolling. Plain CSS `overflow: hidden` on body doesn't work here since
+ * Lenis drives scroll via its own transform, not native scrolling.
+ */
+export function setScrollLocked(locked) {
+  if (!lenis) return
+  if (locked) lenis.stop()
+  else lenis.start()
+}
