@@ -3,9 +3,11 @@ import { computed, useTemplateRef } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import TelescopeHero from '../components/TelescopeHero.vue'
 import ContactSection from '../components/ContactSection.vue'
+import PricingTable from '../components/PricingTable.vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
 import { services, getServiceBySlug } from '../data/services'
+import { getPricingForService } from '../data/pricing'
 
 const route = useRoute()
 const router = useRouter()
@@ -21,9 +23,15 @@ if (!service.value) {
 
 const otherServices = computed(() => services.filter((s) => s.slug !== route.params.slug))
 
+// Tiers for this service only — the full cross-service comparison lives on
+// /pricing, which this section links out to.
+const tiers = computed(() => getPricingForService(route.params.slug))
+
 const overviewRef = useTemplateRef('overview')
 const headingRef = useTemplateRef('heading')
+const pricingRef = useTemplateRef('pricing')
 useScrollReveal(overviewRef, { y: 28, stagger: 0.08 })
+useScrollReveal(pricingRef, { y: 28, stagger: 0.08 })
 useBlurTextReveal(headingRef)
 </script>
 
@@ -51,6 +59,33 @@ useBlurTextReveal(headingRef)
             <span class="text-2xl text-brand-accent">+</span>
             <h3 class="font-heading text-xl font-medium text-white">{{ item.label }}</h3>
             <p class="text-sm text-slate-400">{{ item.detail }}</p>
+          </div>
+        </div>
+
+        <!-- Pricing for this service, sitting between what's included and
+             the CTA: a visitor who has just read the scope is exactly the
+             one asking what it costs. Renders nothing at all for a service
+             with no tiers defined yet, rather than an empty table. -->
+        <div v-if="tiers.length" ref="pricing" class="mt-24 border-t border-white/10 pt-16">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p data-reveal class="text-eyebrow text-brand-accent">Pricing</p>
+              <h2 data-reveal class="font-heading mt-4 max-w-xl text-2xl font-medium text-white sm:text-3xl">
+                What {{ service.title }} costs
+              </h2>
+            </div>
+            <RouterLink
+              data-reveal
+              :to="{ name: 'pricing', hash: `#pricing-${service.slug}` }"
+              class="group flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
+            >
+              Compare all services
+              <span class="transition-transform group-hover:translate-x-1">→</span>
+            </RouterLink>
+          </div>
+
+          <div class="mt-10">
+            <PricingTable :tiers="tiers" />
           </div>
         </div>
 

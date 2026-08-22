@@ -224,6 +224,19 @@ onBeforeUnmount(() => {
           </Transition>
         </li>
 
+        <!-- Pricing is a route of its own, not a home-page section, so it
+             sits outside the hash-driven `links` list and highlights off
+             the current path instead of the scroll position. -->
+        <li>
+          <RouterLink
+            :to="{ name: 'pricing' }"
+            class="text-sm transition-colors"
+            :class="route.path === '/pricing' ? 'text-white' : 'text-white/70 hover:text-white'"
+          >
+            Pricing
+          </RouterLink>
+        </li>
+
         <li v-for="link in links.slice(1)" :key="link.hash">
           <a
             :href="pageHref(link.hash)"
@@ -297,6 +310,17 @@ onBeforeUnmount(() => {
             </RouterLink>
           </li>
         </ul>
+      </li>
+
+      <li>
+        <RouterLink
+          :to="{ name: 'pricing' }"
+          class="block py-2 text-sm transition-colors"
+          :class="route.path === '/pricing' ? 'text-white' : 'text-white/70 hover:text-white'"
+          @click="isOpen = false"
+        >
+          Pricing
+        </RouterLink>
       </li>
 
       <li v-for="link in links.slice(1)" :key="link.hash">
