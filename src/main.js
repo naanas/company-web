@@ -1,12 +1,13 @@
 import { createApp } from 'vue'
 import './style.css'
 import App from './App.vue'
+import router from './router'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
-createApp(App).mount('#app')
+createApp(App).use(router).mount('#app')
 
 // The oversized display headings are sensitive to font metrics — when the
 // Space Grotesk/Inter webfonts swap in after `document.fonts.ready`, text

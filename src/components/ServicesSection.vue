@@ -3,6 +3,7 @@ import { useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
 import { useStripeReveal } from '../composables/useStripeReveal'
+import { services } from '../data/services'
 
 const sectionRef = useTemplateRef('section')
 const headingRef = useTemplateRef('heading')
@@ -10,25 +11,6 @@ const headingRef = useTemplateRef('heading')
 useScrollReveal(sectionRef, { stagger: 0.1 })
 useBlurTextReveal(headingRef)
 useStripeReveal(sectionRef)
-
-const services = [
-  {
-    title: 'IT Consulting',
-    description: 'Advising on the systems and architecture behind your operations, before any code gets written.',
-  },
-  {
-    title: 'Custom Systems & ERP',
-    description: 'Manufacturing, logistics, and business-process systems built around how your team actually works.',
-  },
-  {
-    title: 'Web & Mobile Development',
-    description: 'Websites and applications built for clarity, then engineered to hold up under real traffic.',
-  },
-  {
-    title: 'AI & Data',
-    description: 'Dashboards and predictive tools that turn operational data into decisions.',
-  },
-]
 </script>
 
 <template>
@@ -40,16 +22,23 @@ const services = [
       </h2>
 
       <div class="mt-20 grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-2">
-        <div
+        <RouterLink
           v-for="service in services"
-          :key="service.title"
+          :key="service.slug"
+          :to="{ name: 'service', params: { slug: service.slug } }"
           data-reveal
-          class="flex flex-col gap-4 bg-brand-950 p-8 sm:p-10"
+          class="group flex flex-col gap-4 bg-brand-950 p-8 transition-colors hover:bg-brand-900 sm:p-10"
         >
           <span class="text-2xl text-brand-accent">+</span>
           <h3 class="font-heading text-xl font-medium text-white">{{ service.title }}</h3>
-          <p class="text-sm text-slate-400">{{ service.description }}</p>
-        </div>
+          <p class="text-sm text-slate-400">{{ service.summary }}</p>
+          <span
+            class="mt-2 flex items-center gap-2 text-xs uppercase tracking-widest text-brand-accent opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            Learn more
+            <span class="transition-transform group-hover:translate-x-1">→</span>
+          </span>
+        </RouterLink>
       </div>
     </div>
   </section>

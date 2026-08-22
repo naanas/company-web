@@ -1,27 +1,70 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { isProgrammaticScroll } from '../composables/useLenis'
 import { whenIdle } from '../composables/useIdle'
+import { services } from '../data/services'
 
 gsap.registerPlugin(ScrollTrigger)
+
+const route = useRoute()
 
 const isOpen = ref(false)
 const activeHref = ref('#hero')
 const headerRef = useTemplateRef('header')
+const servicesDropdownRef = useTemplateRef('servicesDropdown')
 
+const servicesOpen = ref(false)
+const mobileServicesOpen = ref(false)
+
+// Plain same-page anchors. These only resolve to something when the home
+// page's sections actually exist in the DOM, so on any other route they
+// fall back to a real navigation back to "/" plus the hash — see pageHref().
 const links = [
-  { label: 'About', href: '#about' },
-  { label: 'Services', href: '#services' },
-  { label: 'Our Clients', href: '#work' },
-  { label: 'Process', href: '#process' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'About', hash: '#about' },
+  { label: 'Our Clients', hash: '#work' },
+  { label: 'Process', hash: '#process' },
+  { label: 'Contact', hash: '#contact' },
 ]
+
+const trackedHashes = ['#hero', '#about', '#services', '#work', '#process', '#contact']
+
+function pageHref(hash) {
+  return route.path === '/' ? hash : `/${hash}`
+}
+
+const isServicesActive = () => route.path.startsWith('/services') || activeHref.value === '#services'
 
 let sectionTriggers = []
 let hideTrigger = null
 let isHidden = false
+
+function teardownSectionTracking() {
+  sectionTriggers.forEach((t) => t.kill())
+  sectionTriggers = []
+}
+
+// Only meaningful on the home page — a service detail page has none of
+// these section ids, so querySelector just skips them.
+function setupSectionTracking() {
+  teardownSectionTracking()
+  trackedHashes.forEach((hash) => {
+    const el = document.querySelector(hash)
+    if (!el) return
+    sectionTriggers.push(
+      ScrollTrigger.create({
+        trigger: el,
+        start: 'top 55%',
+        end: 'bottom 55%',
+        onToggle: (self) => {
+          if (self.isActive) activeHref.value = hash
+        },
+      })
+    )
+  })
+}
 
 onMounted(() => {
   if (!headerRef.value) return
@@ -67,29 +110,50 @@ onMounted(() => {
       },
     })
 
-    // Track which section is currently in view to highlight its nav link —
-    // '#hero' included so the logo/home state is correct before scrolling.
-    ;['#hero', ...links.map((l) => l.href)].forEach((href) => {
-      const el = document.querySelector(href)
-      if (!el) return
-      sectionTriggers.push(
-        ScrollTrigger.create({
-          trigger: el,
-          start: 'top 55%',
-          end: 'bottom 55%',
-          onToggle: (self) => {
-            if (self.isActive) activeHref.value = href
-          },
-        })
-      )
-    })
+    if (route.path === '/') setupSectionTracking()
   })
 })
 
+// NavBar itself never unmounts (it sits beside <router-view>, not inside
+// it), so it has to react to route changes itself rather than relying on
+// mount/unmount — leaving stale ScrollTrigger instances pointing at a home
+// section that's just been torn out from under a route change to a service
+// page would otherwise pile up silently on every visit back to "/".
+watch(
+  () => route.path,
+  (path) => {
+    servicesOpen.value = false
+    mobileServicesOpen.value = false
+    isOpen.value = false
+    if (path === '/') {
+      activeHref.value = '#hero'
+      // The new HomeView's sections mount in the same tick as this watcher
+      // fires; nextTick just waits for that render to actually land in the
+      // DOM before querying for it.
+      nextTick(setupSectionTracking)
+    } else {
+      activeHref.value = ''
+      teardownSectionTracking()
+    }
+  }
+)
+
+function onDocumentClick(event) {
+  if (!servicesDropdownRef.value?.contains(event.target)) servicesOpen.value = false
+}
+
+function onDocumentKeydown(event) {
+  if (event.key === 'Escape') servicesOpen.value = false
+}
+
+document.addEventListener('click', onDocumentClick)
+document.addEventListener('keydown', onDocumentKeydown)
+
 onBeforeUnmount(() => {
   hideTrigger?.kill()
-  sectionTriggers.forEach((t) => t.kill())
-  sectionTriggers = []
+  teardownSectionTracking()
+  document.removeEventListener('click', onDocumentClick)
+  document.removeEventListener('keydown', onDocumentKeydown)
 })
 </script>
 
@@ -98,19 +162,73 @@ onBeforeUnmount(() => {
     <nav
       class="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-white/10 bg-brand-950/60 px-4 py-2.5 backdrop-blur-md sm:px-6"
     >
-      <a href="#hero" class="flex items-center gap-2 font-heading text-base font-semibold tracking-wide text-white">
+      <RouterLink to="/" class="flex items-center gap-2 font-heading text-base font-semibold tracking-wide text-white">
         <span class="flex h-6 w-6 items-center justify-center rounded-full border border-brand-accent/50 text-[0.65rem] text-brand-accent">
           V
         </span>
         VELTECH<span class="text-brand-accent">®</span>
-      </a>
+      </RouterLink>
 
       <ul class="hidden items-center gap-8 md:flex">
-        <li v-for="link in links" :key="link.href">
+        <li>
           <a
-            :href="link.href"
+            :href="pageHref('#about')"
             class="text-sm transition-colors"
-            :class="activeHref === link.href ? 'text-white' : 'text-white/70 hover:text-white'"
+            :class="activeHref === '#about' ? 'text-white' : 'text-white/70 hover:text-white'"
+          >
+            About
+          </a>
+        </li>
+
+        <li
+          ref="servicesDropdown"
+          class="relative"
+          @mouseenter="servicesOpen = true"
+          @mouseleave="servicesOpen = false"
+        >
+          <button
+            type="button"
+            class="flex items-center gap-1.5 text-sm transition-colors"
+            :class="isServicesActive() ? 'text-white' : 'text-white/70 hover:text-white'"
+            :aria-expanded="servicesOpen"
+            aria-haspopup="true"
+            @click="servicesOpen = !servicesOpen"
+          >
+            Services
+            <svg
+              viewBox="0 0 10 6"
+              class="h-2 w-2.5 fill-current transition-transform duration-200"
+              :class="{ 'rotate-180': servicesOpen }"
+              aria-hidden="true"
+            >
+              <path d="M0 0 L5 6 L10 0 Z" />
+            </svg>
+          </button>
+
+          <Transition name="dropdown">
+            <div v-if="servicesOpen" class="absolute left-1/2 top-full w-[36rem] max-w-[90vw] -translate-x-1/2 pt-3">
+              <div class="grid overflow-hidden rounded-3xl border border-white/10 bg-brand-950/95 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] backdrop-blur-md sm:grid-cols-2">
+                <RouterLink
+                  v-for="service in services"
+                  :key="service.slug"
+                  :to="{ name: 'service', params: { slug: service.slug } }"
+                  class="group flex flex-col gap-3 border-b border-white/10 p-6 text-left transition-colors last:border-b-0 sm:border-b-0 sm:odd:border-r sm:[&:nth-child(-n+2)]:border-b"
+                  @click="servicesOpen = false"
+                >
+                  <span class="text-lg text-brand-accent transition-transform group-hover:rotate-90">+</span>
+                  <span class="font-heading text-base font-medium text-white">{{ service.title }}</span>
+                  <span class="text-xs leading-relaxed text-slate-400">{{ service.summary }}</span>
+                </RouterLink>
+              </div>
+            </div>
+          </Transition>
+        </li>
+
+        <li v-for="link in links.slice(1)" :key="link.hash">
+          <a
+            :href="pageHref(link.hash)"
+            class="text-sm transition-colors"
+            :class="activeHref === link.hash ? 'text-white' : 'text-white/70 hover:text-white'"
           >
             {{ link.label }}
           </a>
@@ -119,7 +237,7 @@ onBeforeUnmount(() => {
 
       <div class="flex items-center gap-2">
         <a
-          href="#contact"
+          :href="pageHref('#contact')"
           class="hidden rounded-full bg-white px-5 py-2 text-sm font-medium text-brand-950 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.25)] sm:inline-block"
         >
           Let's Talk
@@ -139,11 +257,53 @@ onBeforeUnmount(() => {
       v-if="isOpen"
       class="mx-auto mt-2 flex max-w-6xl flex-col gap-1 rounded-3xl border border-white/10 bg-brand-950/90 px-6 py-4 backdrop-blur-md md:hidden"
     >
-      <li v-for="link in links" :key="link.href">
+      <li>
         <a
-          :href="link.href"
+          :href="pageHref('#about')"
           class="block py-2 text-sm transition-colors"
-          :class="activeHref === link.href ? 'text-white' : 'text-white/70 hover:text-white'"
+          :class="activeHref === '#about' ? 'text-white' : 'text-white/70 hover:text-white'"
+          @click="isOpen = false"
+        >
+          About
+        </a>
+      </li>
+
+      <li>
+        <button
+          type="button"
+          class="flex w-full items-center justify-between py-2 text-sm transition-colors"
+          :class="isServicesActive() ? 'text-white' : 'text-white/70 hover:text-white'"
+          :aria-expanded="mobileServicesOpen"
+          @click="mobileServicesOpen = !mobileServicesOpen"
+        >
+          Services
+          <svg
+            viewBox="0 0 10 6"
+            class="h-2 w-2.5 fill-current transition-transform duration-200"
+            :class="{ 'rotate-180': mobileServicesOpen }"
+            aria-hidden="true"
+          >
+            <path d="M0 0 L5 6 L10 0 Z" />
+          </svg>
+        </button>
+        <ul v-if="mobileServicesOpen" class="flex flex-col gap-1 border-l border-white/10 pl-4">
+          <li v-for="service in services" :key="service.slug">
+            <RouterLink
+              :to="{ name: 'service', params: { slug: service.slug } }"
+              class="block py-2 text-sm text-white/70 transition-colors hover:text-white"
+              @click="isOpen = false"
+            >
+              {{ service.title }}
+            </RouterLink>
+          </li>
+        </ul>
+      </li>
+
+      <li v-for="link in links.slice(1)" :key="link.hash">
+        <a
+          :href="pageHref(link.hash)"
+          class="block py-2 text-sm transition-colors"
+          :class="activeHref === link.hash ? 'text-white' : 'text-white/70 hover:text-white'"
           @click="isOpen = false"
         >
           {{ link.label }}
@@ -152,3 +312,22 @@ onBeforeUnmount(() => {
     </ul>
   </header>
 </template>
+
+<style scoped>
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-enter-active,
+  .dropdown-leave-active {
+    transition: none;
+  }
+}
+</style>
