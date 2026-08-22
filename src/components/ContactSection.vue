@@ -26,21 +26,7 @@ const form = reactive({
   message: '',
 })
 
-const isSubmitting = ref(false)
-const submitted = ref(false)
-
-// Placeholder handler — wire this up to your actual backend/email service
-// (e.g. an API route, Formspree, or a serverless function) later.
-async function handleSubmit() {
-  isSubmitting.value = true
-  console.log('Contact form submitted:', { ...form })
-
-  await new Promise((resolve) => setTimeout(resolve, 600))
-
-  isSubmitting.value = false
-  submitted.value = true
-  Object.assign(form, { name: '', company: '', email: '', phone: '', message: '' })
-}
+const handedOff = ref(false)
 
 // Placeholder business contact — replace with real details.
 const contact = {
@@ -48,11 +34,55 @@ const contact = {
   phone: '+62 8XX-XXXX-XXXX',
 }
 
+// There is no backend behind this form. It previously pretended otherwise:
+// it logged the submission to the console, waited 600ms, then told the
+// visitor "your message has been sent" — so every enquiry was silently lost
+// while the sender believed it had arrived. On a page whose pricing tiers
+// all funnel here with "Request a quote", that is the worst possible place
+// to lose a lead.
+//
+// Until a real endpoint exists this hands the message to the visitor's own
+// mail client instead, which actually delivers it and leaves them holding a
+// copy in their sent folder. The wording below is careful never to claim
+// more than that: nothing here can confirm delivery, only that the draft was
+// opened.
+//
+// To move to a real backend later, replace the body of this function with
+// the POST and switch the confirmation copy back to a delivery claim — at
+// that point the claim will be true.
+function handleSubmit() {
+  // Optional fields drop out; the blank line separating the details block
+  // from the message body is added after filtering, since an empty string
+  // is falsy and would be dropped along with them.
+  const details = [
+    `Name: ${form.name}`,
+    form.company && `Company: ${form.company}`,
+    `Email: ${form.email}`,
+    form.phone && `Phone: ${form.phone}`,
+  ].filter(Boolean)
+
+  const subject = `Project enquiry — ${form.name}${form.company ? ` (${form.company})` : ''}`
+  const body = `${details.join('\n')}\n\n${form.message}`
+
+  window.location.href =
+    `mailto:${contact.email}` +
+    `?subject=${encodeURIComponent(subject)}` +
+    `&body=${encodeURIComponent(body)}`
+
+  handedOff.value = true
+}
+
+// `href: null` renders nothing at all. The three entries below were pointing
+// at "#", which does not open a profile — it scrolls the visitor back to the
+// top of the page, which reads as the site breaking. Give each one a real
+// URL to bring it back; the whole block hides while none have one.
 const socials = [
-  { label: 'LinkedIn', href: '#' },
-  { label: 'Instagram', href: '#' },
-  { label: 'Dribbble', href: '#' },
+  { label: 'LinkedIn', href: null },
+  { label: 'Instagram', href: null },
+  { label: 'Dribbble', href: null },
 ]
+
+const visibleSocials = socials.filter((s) => s.href)
 </script>
 
 <template>
@@ -136,14 +166,21 @@ const socials = [
 
           <button
             type="submit"
-            :disabled="isSubmitting"
-            class="w-fit rounded-full bg-brand-accent px-6 py-3 text-sm font-medium text-brand-950 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(34,211,238,0.45)] disabled:cursor-not-allowed disabled:opacity-60"
+            class="w-fit rounded-full bg-brand-accent px-6 py-3 text-sm font-medium text-brand-950 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(34,211,238,0.45)]"
           >
-            {{ isSubmitting ? 'Sending…' : 'Send Message' }}
+            Compose Message
           </button>
 
-          <p v-if="submitted" class="text-sm text-brand-accent">
-            Thank you! Your message has been sent, our team will be in touch shortly.
+          <!-- Says what actually happened — the draft was opened — and never
+               that it was delivered, which this form has no way to know. -->
+          <p v-if="handedOff" class="text-sm leading-relaxed text-brand-accent">
+            Your email app should have opened with this message ready to send. If nothing
+            happened, email us directly at
+            <a :href="`mailto:${contact.email}`" class="underline underline-offset-4">{{ contact.email }}</a
+            >.
+          </p>
+          <p v-else class="text-xs leading-relaxed text-white/40">
+            This opens a draft in your own email app, so you keep a copy of what you sent.
           </p>
         </form>
 
@@ -158,13 +195,15 @@ const socials = [
             </a>
           </div>
 
-          <div>
+          <div v-if="visibleSocials.length">
             <p class="text-eyebrow text-white/40">Social</p>
             <div class="mt-3 flex flex-col gap-1 lg:items-end">
               <a
-                v-for="social in socials"
+                v-for="social in visibleSocials"
                 :key="social.label"
                 :href="social.href"
+                target="_blank"
+                rel="noopener noreferrer"
                 class="text-white/70 transition hover:text-white"
               >
                 {{ social.label }}
