@@ -17,8 +17,13 @@ const trackRef = useTemplateRef('track')
 useMarquee(trackRef, { speed: 60 })
 useStripeReveal(sectionRef)
 
-const missionText =
-  "VELTECH is a two-person IT consulting and software house building custom systems for operations that can't afford to break."
+// Kept short on purpose. This renders at display size — 44px even on a 390px
+// phone — so every extra word costs a full line: the previous 19-word version
+// ran past a whole mobile screen, and the word-by-word scrub left most of it
+// sitting grey and half-revealed, which read as broken text rather than as an
+// effect. It also opened by restating "a two-person IT consulting and software
+// house", which the paragraph directly below already says in its own words.
+const missionText = "We build custom systems for operations that can't afford to break."
 
 const words = computed(() => missionText.split(' '))
 const marqueeWords = ['INNOVATION', 'IMPACT', 'INSPIRATION', 'INTEGRITY']
@@ -72,7 +77,11 @@ onBeforeUnmount(() => {
        and this one never scrolls). `clip` still crops horizontally for the
        marquee without creating that scrollport. -->
   <section id="about" ref="section" class="relative min-h-[130vh] overflow-x-clip bg-paper-100">
-    <div class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pt-16 pb-16 lg:sticky lg:top-16">
+    <!-- `pt-28` clears the fixed navbar. At `pt-16` (64px) the eyebrow sat
+         under the nav pill, which is ~76px tall including its own top offset —
+         on mobile its first line was hidden behind the bar entirely. The
+         sticky offset matches for the same reason. -->
+    <div class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pt-28 pb-16 lg:sticky lg:top-28">
       <div ref="eyebrow" class="text-eyebrow max-w-xs text-paper-muted">
         Small Team, Direct Line to the Build.<br />
         No Account Managers Between You and the Code.

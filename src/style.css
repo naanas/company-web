@@ -42,12 +42,18 @@ body {
 /* Fluid giant display type, used for the oversized stacked headlines
    (hero, marquee, services). clamp() keeps it from overflowing on mobile
    without needing per-breakpoint overrides everywhere it's used. */
+/* The floor matters more than the ceiling here. At 8vw a 390px phone lands
+   under the old 2.75rem floor, so every display line rendered at a flat 44px
+   no matter how narrow the screen got — enough that a one-sentence statement
+   spilled past a full mobile screen. Dropping the floor to 2.25rem and the
+   slope to 7vw is a mobile-only change in practice: from about 1400px up the
+   ceiling was already clamping both versions to the same 7rem. */
 .text-display {
   font-family: var(--font-heading);
   font-weight: 600;
   line-height: 0.95;
   letter-spacing: -0.01em;
-  font-size: clamp(2.75rem, 8vw, 7rem);
+  font-size: clamp(2.25rem, 7vw, 7rem);
 }
 
 .text-display-lg {
