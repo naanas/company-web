@@ -38,8 +38,29 @@ function pageHref(hash) {
 const isServicesActive = () => route.path.startsWith('/services') || activeHref.value === '#services'
 
 let sectionTriggers = []
-let hideTrigger = null
+let matchMedia = null
 let isHidden = false
+
+// Single owner of the shown/hidden state, so the scroll direction and the
+// pointer-near-top rescue below can't fight each other into a half-faded bar.
+function setHidden(hidden) {
+  if (!headerRef.value || hidden === isHidden) return
+  isHidden = hidden
+
+  gsap.to(headerRef.value, {
+    y: hidden ? -120 : 0,
+    autoAlpha: hidden ? 0 : 1,
+    duration: 0.4,
+    ease: 'power2.out',
+    overwrite: true,
+  })
+}
+
+const TOP_ZONE = 90
+
+function onPointerNearTop(event) {
+  if (event.clientY <= TOP_ZONE) setHidden(false)
+}
 
 function teardownSectionTracking() {
   sectionTriggers.forEach((t) => t.kill())
@@ -90,24 +111,37 @@ onMounted(() => {
     // down, which used to hide the very bar the user just reached for. Same
     // for while the mobile menu is open, since hiding the header takes the
     // open menu with it.
-    hideTrigger = ScrollTrigger.create({
-      start: 'top -120',
-      end: 99999,
-      onUpdate: (self) => {
-        if (isProgrammaticScroll() || isOpen.value) return
+    //
+    // Desktop only. `autoAlpha` puts the header at `visibility: hidden`, so a
+    // hidden bar is not merely invisible, it is unclickable — and below `md`
+    // the hamburger inside it is the ONLY way to navigate. Auto-hiding there
+    // stranded anyone who had scrolled down: no menu button, no links, and no
+    // way back except scrolling up first, which reads as the nav being broken.
+    //
+    // Both breakpoints are declared even though only one branch does work:
+    // gsap.matchMedia runs its callback only when at least one query matches,
+    // so a lone `(min-width: 768px)` would silently do nothing on mobile.
+    matchMedia = gsap.matchMedia()
+    matchMedia.add({ isDesktop: '(min-width: 768px)', isMobile: '(max-width: 767px)' }, (context) => {
+      if (!context.conditions.isDesktop) {
+        setHidden(false)
+        return
+      }
 
-        const goingDown = self.direction === 1
-        if (goingDown === isHidden) return
-        isHidden = goingDown
+      ScrollTrigger.create({
+        start: 'top -120',
+        end: 99999,
+        onUpdate: (self) => {
+          if (isProgrammaticScroll() || isOpen.value) return
+          setHidden(self.direction === 1)
+        },
+      })
 
-        gsap.to(headerRef.value, {
-          y: goingDown ? -120 : 0,
-          autoAlpha: goingDown ? 0 : 1,
-          duration: 0.4,
-          ease: 'power2.out',
-          overwrite: true,
-        })
-      },
+      // Reaching for the nav is intent enough to bring it back. Without this
+      // the only way to recover a hidden bar is to scroll up, which is a
+      // strange thing to have to do when the pointer is already up there.
+      window.addEventListener('pointermove', onPointerNearTop)
+      return () => window.removeEventListener('pointermove', onPointerNearTop)
     })
 
     if (route.path === '/') setupSectionTracking()
@@ -150,7 +184,9 @@ document.addEventListener('click', onDocumentClick)
 document.addEventListener('keydown', onDocumentKeydown)
 
 onBeforeUnmount(() => {
-  hideTrigger?.kill()
+  // Reverting the matchMedia context kills the ScrollTrigger it created and
+  // runs the cleanup that removes the pointer listener.
+  matchMedia?.revert()
   teardownSectionTracking()
   document.removeEventListener('click', onDocumentClick)
   document.removeEventListener('keydown', onDocumentKeydown)
