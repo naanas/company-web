@@ -18,7 +18,24 @@ defineProps({
 })
 
 const rootRef = useTemplateRef('root')
-useScrollReveal(rootRef, { y: 28, stagger: 0.08 })
+
+// Deliberately NOT the site-wide `[data-reveal]` marker. This component
+// renders inside containers that run their own reveal over `[data-reveal]`
+// — on a service page it sits inside both the pricing block and the whole
+// overview section — so sharing the marker meant every tier card was driven
+// by three competing tweens on three different ScrollTriggers at once. Its
+// own marker keeps the cards owned by exactly one animation.
+//
+// `once` because a pricing table is something visitors scroll up and down
+// while comparing; replaying the reveal in reverse each time they scroll
+// back reads as the cards flickering out from under them.
+useScrollReveal(rootRef, {
+  selector: '[data-reveal-price]',
+  y: 20,
+  duration: 1.1,
+  stagger: 0.09,
+  once: true,
+})
 </script>
 
 <template>
@@ -27,7 +44,7 @@ useScrollReveal(rootRef, { y: 28, stagger: 0.08 })
          so on the table itself — not only in the small print — is what keeps
          a starting price from being read as a quote for unscoped work. -->
     <p
-      data-reveal
+      data-reveal-price
       class="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-brand-accent/30 bg-brand-accent/5 px-5 py-4 text-sm text-brand-accent"
     >
       <span class="font-medium">Starting prices.</span>
@@ -40,7 +57,7 @@ useScrollReveal(rootRef, { y: 28, stagger: 0.08 })
       <div
         v-for="tier in tiers"
         :key="tier.name"
-        data-reveal
+        data-reveal-price
         class="flex flex-col gap-6 p-8 sm:p-10"
         :class="tier.featured ? 'bg-brand-900' : 'bg-brand-950'"
       >
@@ -95,7 +112,7 @@ useScrollReveal(rootRef, { y: 28, stagger: 0.08 })
       </div>
     </div>
 
-    <div v-if="showIncluded" data-reveal class="mt-10 border-t border-white/10 pt-8">
+    <div v-if="showIncluded" data-reveal-price class="mt-10 border-t border-white/10 pt-8">
       <p class="text-eyebrow text-white/40">Included With Every Engagement</p>
       <ul class="mt-5 grid gap-3 sm:grid-cols-2">
         <li v-for="item in includedEverywhere" :key="item" class="flex gap-3 text-sm text-slate-400">

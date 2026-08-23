@@ -29,9 +29,13 @@ const tiers = computed(() => getPricingForService(route.params.slug))
 
 const overviewRef = useTemplateRef('overview')
 const headingRef = useTemplateRef('heading')
-const pricingRef = useTemplateRef('pricing')
+
+// One reveal for this whole section. There used to be a second one scoped to
+// the pricing block, but that block sits inside this section — so its
+// contents were being animated twice over, and PricingTable's own reveal
+// made three. The pricing heading and link carry plain `data-reveal` and are
+// covered here; the tier cards are PricingTable's own business.
 useScrollReveal(overviewRef, { y: 28, stagger: 0.08 })
-useScrollReveal(pricingRef, { y: 28, stagger: 0.08 })
 useBlurTextReveal(headingRef)
 </script>
 
@@ -66,7 +70,7 @@ useBlurTextReveal(headingRef)
              the CTA: a visitor who has just read the scope is exactly the
              one asking what it costs. Renders nothing at all for a service
              with no tiers defined yet, rather than an empty table. -->
-        <div v-if="tiers.length" ref="pricing" class="mt-24 border-t border-white/10 pt-16">
+        <div v-if="tiers.length" class="mt-24 border-t border-white/10 pt-16">
           <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p data-reveal class="text-eyebrow text-brand-accent">Pricing</p>

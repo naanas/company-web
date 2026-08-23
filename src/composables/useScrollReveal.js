@@ -25,45 +25,70 @@ export function useScrollReveal(targetRef, options = {}) {
     duration = 0.9,
     stagger = 0.12,
     start = 'top 80%',
+    // Reveal once and stay put. The default replays in reverse when the
+    // section leaves upward, which reads as content flickering back out on
+    // a long page the visitor is scanning up and down.
+    once = false,
   } = options
 
   let triggers = []
   let alive = true
 
   onMounted(() => {
-    // Deferred to idle time: this section is below the fold at mount, so
-    // there's no rush to have its ScrollTrigger ready immediately — doing
-    // it eagerly just means competing with the hero's own entrance
-    // animation for the main thread. See useIdle.js.
+    if (!targetRef.value) return
+
+    const root = targetRef.value
+    const els = root.querySelectorAll(selector)
+    const targets = els.length ? els : [root]
+
+    if (reduceMotionQuery.matches) {
+      gsap.set(targets, { autoAlpha: 1, x: 0, y: 0 })
+      return
+    }
+
+    // Hide synchronously, here in the mount pass — NOT inside whenIdle below.
+    //
+    // The whole reveal used to be deferred, but the hidden "from" state only
+    // landed when the tween was finally built, ~1.2s later. Until then the
+    // content sat on screen fully rendered, and the deferred setup then
+    // snapped it to invisible and faded it back in. Measured on /pricing:
+    // opacity 1 at 64ms, 0.16 at 1289ms, back to 1 at 1924ms — a second of
+    // readable content, yanked away and replayed.
+    //
+    // A gsap.set is cheap and synchronous, so paying for it at mount costs
+    // nothing the hero would notice, while the expensive part (building
+    // ScrollTriggers) still waits for idle.
+    gsap.set(targets, { autoAlpha: 0, x, y })
+
+    const motion = { autoAlpha: 1, x: 0, y: 0, duration, stagger, ease: 'power3.out' }
+
+    // Anything already on screen at mount plays straight away, with no
+    // ScrollTrigger at all — it is past its own start point and can never
+    // scroll into view again, so a trigger would only be a wrapper around
+    // "run now". Waiting for idle here meant a page whose first screen is
+    // all reveals (/pricing has no 3D hero to wait on) sat blank for the
+    // full 1.2s floor before anything faded in — trading the old flash for
+    // dead air. Off-screen sections still defer; nobody is looking at them.
+    const rect = root.getBoundingClientRect()
+    const startsVisible = rect.top < window.innerHeight * 0.85 && rect.bottom > 0
+
+    if (startsVisible) {
+      gsap.to(targets, { ...motion, delay: 0.15 })
+      return
+    }
+
     whenIdle(() => {
       if (!alive || !targetRef.value) return
 
-      const root = targetRef.value
-      const els = root.querySelectorAll(selector)
-      const targets = els.length ? els : [root]
-
-      if (reduceMotionQuery.matches) {
-        gsap.set(targets, { autoAlpha: 1, x: 0, y: 0 })
-        return
-      }
-
-      const anim = gsap.fromTo(
-        targets,
-        { autoAlpha: 0, x, y },
-        {
-          autoAlpha: 1,
-          x: 0,
-          y: 0,
-          duration,
-          stagger,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: root,
-            start,
-            toggleActions: 'play none none reverse',
-          },
-        }
-      )
+      const anim = gsap.to(targets, {
+        ...motion,
+        scrollTrigger: {
+          trigger: root,
+          start,
+          toggleActions: once ? 'play none none none' : 'play none none reverse',
+          once,
+        },
+      })
 
       if (anim.scrollTrigger) triggers.push(anim.scrollTrigger)
     })
