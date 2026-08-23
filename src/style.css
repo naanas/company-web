@@ -42,18 +42,30 @@ body {
 /* Fluid giant display type, used for the oversized stacked headlines
    (hero, marquee, services). clamp() keeps it from overflowing on mobile
    without needing per-breakpoint overrides everywhere it's used. */
-/* The floor matters more than the ceiling here. At 8vw a 390px phone lands
-   under the old 2.75rem floor, so every display line rendered at a flat 44px
-   no matter how narrow the screen got — enough that a one-sentence statement
-   spilled past a full mobile screen. Dropping the floor to 2.25rem and the
-   slope to 7vw is a mobile-only change in practice: from about 1400px up the
-   ceiling was already clamping both versions to the same 7rem. */
+/* Sized for SHORT headings — "Quick Facts", "Projects We've Built" — where
+   three or four words at 7rem is the whole point. Long copy set at this size
+   overruns any viewport; use .text-statement for that instead. */
 .text-display {
   font-family: var(--font-heading);
   font-weight: 600;
   line-height: 0.95;
   letter-spacing: -0.01em;
-  font-size: clamp(2.25rem, 7vw, 7rem);
+  font-size: clamp(2.75rem, 8vw, 7rem);
+}
+
+/* A full sentence at display weight — the About section's scrubbed statement.
+   Deliberately smaller and slower-growing than .text-display: at 7vw that
+   statement rendered 100px tall per line on a 1440px screen and ran to
+   1053px, overflowing a 900px viewport and defeating the `lg:sticky` block it
+   lives in (a sticky element taller than the viewport has nothing to stick
+   to). Roughly two thirds the size holds ~28 words inside one screen at both
+   ends of the range. */
+.text-statement {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  font-size: clamp(2rem, 4.5vw, 4rem);
 }
 
 .text-display-lg {

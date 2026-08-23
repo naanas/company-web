@@ -17,13 +17,19 @@ const trackRef = useTemplateRef('track')
 useMarquee(trackRef, { speed: 60 })
 useStripeReveal(sectionRef)
 
-// Kept short on purpose. This renders at display size — 44px even on a 390px
-// phone — so every extra word costs a full line: the previous 19-word version
-// ran past a whole mobile screen, and the word-by-word scrub left most of it
-// sitting grey and half-revealed, which read as broken text rather than as an
-// effect. It also opened by restating "a two-person IT consulting and software
-// house", which the paragraph directly below already says in its own words.
-const missionText = "We build custom systems for operations that can't afford to break."
+// Long on purpose: this is the section's centerpiece and it's revealed word by
+// word on scroll, so it needs enough words to be worth scrubbing through — a
+// short line resolves before the reader has really started scrolling.
+//
+// What it must NOT do is go back to restating "a two-person IT consulting and
+// software house", which the paragraph directly below already says in its own
+// words. The added length goes into what VELTECH actually builds instead.
+//
+// Rendered at display size, so every word costs roughly half a line on a
+// phone. If this grows much past 30 words, re-check it at 390px before
+// shipping — see the type-scale note in style.css.
+const missionText =
+  "We build custom systems for operations that can't afford to break: the ERP, dashboards, and integrations your day actually runs on, shaped around how your team already works."
 
 const words = computed(() => missionText.split(' '))
 const marqueeWords = ['INNOVATION', 'IMPACT', 'INSPIRATION', 'INTEGRITY']
@@ -87,7 +93,7 @@ onBeforeUnmount(() => {
         No Account Managers Between You and the Code.
       </div>
 
-      <p ref="words" class="text-display max-w-5xl text-paper-ink">
+      <p ref="words" class="text-statement max-w-4xl text-paper-ink">
         <span v-for="(word, i) in words" :key="i" data-word class="mr-3 inline-block">{{ word }}</span>
       </p>
 
