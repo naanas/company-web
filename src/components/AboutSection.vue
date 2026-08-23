@@ -29,7 +29,7 @@ useStripeReveal(sectionRef)
 // phone. If this grows much past 30 words, re-check it at 390px before
 // shipping — see the type-scale note in style.css.
 const missionText =
-  "We build custom systems for operations that can't afford to break: the ERP, dashboards, and integrations your day actually runs on, shaped around how your team already works."
+  "We build custom systems for operations that can't afford to break: the ERP, dashboards, and integrations your day actually runs on. Shaped around how your team already works, wired into the tools you already run, and documented well enough that the next person can pick it up."
 
 const words = computed(() => missionText.split(' '))
 const marqueeWords = ['INNOVATION', 'IMPACT', 'INSPIRATION', 'INTEGRITY']
@@ -77,17 +77,23 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <!-- `overflow-x-clip` rather than `overflow-hidden`: `hidden` makes this
-       section a scroll container, which silently cancels the `lg:sticky`
-       on the block below (sticky resolves against its nearest scrollport,
-       and this one never scrolls). `clip` still crops horizontally for the
-       marquee without creating that scrollport. -->
+  <!-- `overflow-x-clip` rather than `overflow-hidden`: `clip` crops the
+       marquee horizontally without turning this section into a scroll
+       container, which is the cheaper of the two and keeps `position: sticky`
+       usable for anything nested here later. -->
   <section id="about" ref="section" class="relative min-h-[130vh] overflow-x-clip bg-paper-100">
-    <!-- `pt-28` clears the fixed navbar. At `pt-16` (64px) the eyebrow sat
-         under the nav pill, which is ~76px tall including its own top offset —
-         on mobile its first line was hidden behind the bar entirely. The
-         sticky offset matches for the same reason. -->
-    <div class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pt-28 pb-16 lg:sticky lg:top-28">
+    <!-- No `lg:sticky` here any more. It was pinning nothing: the block runs
+         1304px tall against 788px of usable viewport (900px less the 112px
+         offset), and a sticky element taller than its scrollport simply
+         scrolls. That held at every copy length this statement has had, so
+         the class was a promise the layout never kept. Bring it back only
+         alongside copy short enough to fit the screen — at desktop size that
+         means roughly 336px of statement, about a third of what is here.
+
+         `pt-28` clears the fixed navbar: at `pt-16` (64px) the eyebrow sat
+         under the nav pill, which is ~76px tall including its own top offset,
+         and on mobile its first line was hidden behind the bar entirely. -->
+    <div class="mx-auto flex max-w-6xl flex-col gap-16 px-6 pt-28 pb-16">
       <div ref="eyebrow" class="text-eyebrow max-w-xs text-paper-muted">
         Small Team, Direct Line to the Build.<br />
         No Account Managers Between You and the Code.
