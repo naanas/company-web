@@ -199,9 +199,13 @@ onBeforeUnmount(() => {
       class="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-white/10 bg-brand-950/60 px-4 py-2.5 backdrop-blur-md sm:px-6"
     >
       <RouterLink to="/" class="flex items-center gap-2 font-heading text-base font-semibold tracking-wide text-white">
-        <span class="flex h-6 w-6 items-center justify-center rounded-full border border-brand-accent/50 text-[0.65rem] text-brand-accent">
-          V
-        </span>
+        <!-- The mark is painted by CSS through an alpha mask rather than
+             shipped as a coloured image: logo-mark.png is the artwork's
+             silhouette, and `bg-white` here is what actually colours it. The
+             source art is solid black, which would have vanished against this
+             near-black bar. Recolouring is a class change — `bg-brand-accent`
+             for cyan — with no need to regenerate the file. -->
+        <span class="brand-mark h-6 w-7 shrink-0 bg-white" aria-hidden="true"></span>
         VELTECH<span class="text-brand-accent">®</span>
       </RouterLink>
 
@@ -374,6 +378,13 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* Written out here rather than as Tailwind arbitrary properties so the
+   -webkit- prefix comes along: Safari still needs it for mask shorthand. */
+.brand-mark {
+  -webkit-mask: url('/logo-mark.png') center / contain no-repeat;
+  mask: url('/logo-mark.png') center / contain no-repeat;
+}
+
 .dropdown-enter-active,
 .dropdown-leave-active {
   transition: opacity 0.18s ease, transform 0.18s ease;
