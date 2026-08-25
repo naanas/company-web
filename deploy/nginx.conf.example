@@ -28,8 +28,15 @@ server {
     # returns 404. The pricing pages are meant to be linked to, so that last
     # case matters most.
     # ---------------------------------------------------------------------
+    # `$uri.html` must come before the index.html fallback. The build emits one
+    # static file per route — pricing.html, services/ai-data.html and so on —
+    # each carrying that route's real title, description and canonical. Without
+    # this line every request falls through to index.html instead, and the
+    # first-pass crawl (which does not run JavaScript) sees the home page's
+    # metadata on every URL, including a canonical pointing at "/" that asks
+    # Google not to index the page separately.
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files $uri $uri.html $uri/ /index.html;
     }
 
     # ---------------------------------------------------------------------

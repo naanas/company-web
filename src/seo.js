@@ -18,32 +18,40 @@ const DEFAULT_DESCRIPTION =
  * fixed `href="/"` on every page tells Google those pages are duplicates of
  * the home page and should not be indexed in their own right.
  */
-export function metaForRoute(route) {
-  if (route.name === 'pricing') {
+export function metaForPath(path) {
+  if (path === '/pricing') {
     return {
       title: `Pricing — ${SITE_NAME}`,
       description:
         'Starting prices for IT consulting, custom ERP, web and mobile development, and data work. Domain and hosting billed at cost, with a fixed quote agreed before work starts.',
+      heading: 'What It Costs to Work With Us',
       path: '/pricing',
     }
   }
 
-  if (route.name === 'service') {
-    const service = getServiceBySlug(route.params.slug)
-    if (service) {
-      return {
-        title: `${service.title} — ${SITE_NAME}`,
-        description: service.summary,
-        path: `/services/${service.slug}`,
-      }
+  const service = path.startsWith('/services/') ? getServiceBySlug(path.slice('/services/'.length)) : null
+  if (service) {
+    return {
+      title: `${service.title} — ${SITE_NAME}`,
+      description: service.summary,
+      heading: service.title,
+      path: `/services/${service.slug}`,
     }
   }
 
   return {
     title: `${SITE_NAME} — Custom Systems for Operations That Can’t Afford to Break`,
     description: DEFAULT_DESCRIPTION,
+    heading: 'Custom systems for operations that can’t afford to break',
     path: '/',
   }
+}
+
+/** Same lookup, keyed off a resolved vue-router route rather than a raw path. */
+export function metaForRoute(route) {
+  if (route.name === 'pricing') return metaForPath('/pricing')
+  if (route.name === 'service') return metaForPath(`/services/${route.params.slug}`)
+  return metaForPath('/')
 }
 
 function setTag(selector, attr, value) {

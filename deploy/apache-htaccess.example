@@ -11,6 +11,14 @@
   RewriteEngine On
   RewriteBase /
   RewriteRule ^index\.html$ - [L]
+
+  # Serve the per-route static file first. The build emits pricing.html,
+  # services/ai-data.html and so on, each carrying that route's real title,
+  # description and canonical — the first-pass crawl does not run JavaScript,
+  # so without this every URL would serve the home page's metadata.
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.*)$ $1.html [L]
+
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . /index.html [L]

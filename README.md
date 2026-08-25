@@ -71,14 +71,33 @@ The rest needs a Google account and cannot be done from the repo:
 Expect days to weeks before anything appears, and longer to rank for anything
 competitive. Searching `site:veltera.cloud` shows what is currently indexed.
 
-Two things worth knowing about this site specifically:
+### Why there is a static file per route
 
-- It is a client-rendered SPA. Google executes JavaScript, but it does so on a
-  second pass that can lag the initial crawl. If indexing turns out to be slow
-  or partial, pre-rendering the six routes to static HTML at build time is the
-  fix, and the route list in `src/seo.js` already enumerates them.
-- Nothing here can promise a ranking. Being indexed means being *findable*;
-  ranking depends on content, links, and competition.
+The build emits `pricing.html`, `services/ai-data.html` and so on alongside
+`index.html`, each with that route's title, description and canonical already
+in the head.
+
+Googlebot crawls in two passes: HTML first, JavaScript later — and "later" can
+be days. `src/seo.js` sets metadata at runtime, which only helps on that second
+pass. Until then every URL served index.html's defaults, so all six pages
+announced the home page's title *and* a canonical pointing at `/` — which reads
+as "this is a duplicate, don't index it separately".
+
+**The server must try `$uri.html` before falling back to index.html** or these
+files are never served and the problem comes straight back. See the `try_files`
+line in `deploy/nginx.conf.example`.
+
+The `#app` div in those files holds the heading, description and links the
+route genuinely shows. Vue replaces it on mount. Keeping it identical to what
+renders is what separates pre-rendering from cloaking — do not put content
+there that the app does not actually display.
+
+### What cannot be sped up
+
+`robots.txt` only grants permission; it has no lever for crawl speed. Google
+ignores `Crawl-delay` outright. Nothing written there will make indexing
+faster, and no setting in this repo can promise a ranking — being indexed means
+being *findable*, while ranking depends on content, links and competition.
 
 ## Still to fill in before launch
 
