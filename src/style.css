@@ -68,12 +68,18 @@ body {
   font-size: clamp(2rem, 4.5vw, 4rem);
 }
 
+/* Capped at 8rem rather than 9.5rem. Its only user is the contact heading,
+   whose longest word — "Meaningful?" — measures about 6.8em: at the old cap
+   that is 1032px of text inside a 672px box, so it spilled out of its own
+   column and ran under the "Start a Collaboration" link beside it. A single
+   word cannot be wrapped, so the overflow could only be fixed by bringing the
+   size down and widening the box it sits in (see ContactSection). */
 .text-display-lg {
   font-family: var(--font-heading);
   font-weight: 600;
   line-height: 0.92;
   letter-spacing: -0.01em;
-  font-size: clamp(3.5rem, 11vw, 9.5rem);
+  font-size: clamp(3rem, 9vw, 8rem);
 }
 
 .text-eyebrow {

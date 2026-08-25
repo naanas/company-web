@@ -156,7 +156,7 @@ onMounted(() => {
 watch(
   () => route.path,
   (path) => {
-    servicesOpen.value = false
+    closeServices({ immediate: true })
     mobileServicesOpen.value = false
     isOpen.value = false
     if (path === '/') {
@@ -172,18 +172,49 @@ watch(
   }
 )
 
+// Closing on a bare `mouseleave` made the panel twitchy: the pointer only has
+// to clip a corner on its way down to the items — or cross the seam between
+// the button and the panel — for the menu to snap shut and have to be
+// reopened. A short grace period absorbs those, and re-entering cancels it,
+// so the panel closes when the user actually leaves rather than whenever the
+// cursor briefly strays.
+const SERVICES_CLOSE_DELAY = 140
+let servicesCloseTimer = null
+
+function openServices() {
+  clearTimeout(servicesCloseTimer)
+  servicesOpen.value = true
+}
+
+function closeServices({ immediate = false } = {}) {
+  clearTimeout(servicesCloseTimer)
+  if (immediate) {
+    servicesOpen.value = false
+    return
+  }
+  servicesCloseTimer = setTimeout(() => {
+    servicesOpen.value = false
+  }, SERVICES_CLOSE_DELAY)
+}
+
+function toggleServices() {
+  if (servicesOpen.value) closeServices({ immediate: true })
+  else openServices()
+}
+
 function onDocumentClick(event) {
-  if (!servicesDropdownRef.value?.contains(event.target)) servicesOpen.value = false
+  if (!servicesDropdownRef.value?.contains(event.target)) closeServices({ immediate: true })
 }
 
 function onDocumentKeydown(event) {
-  if (event.key === 'Escape') servicesOpen.value = false
+  if (event.key === 'Escape') closeServices({ immediate: true })
 }
 
 document.addEventListener('click', onDocumentClick)
 document.addEventListener('keydown', onDocumentKeydown)
 
 onBeforeUnmount(() => {
+  clearTimeout(servicesCloseTimer)
   // Reverting the matchMedia context kills the ScrollTrigger it created and
   // runs the cleanup that removes the pointer listener.
   matchMedia?.revert()
@@ -223,8 +254,8 @@ onBeforeUnmount(() => {
         <li
           ref="servicesDropdown"
           class="relative"
-          @mouseenter="servicesOpen = true"
-          @mouseleave="servicesOpen = false"
+          @mouseenter="openServices"
+          @mouseleave="closeServices()"
         >
           <button
             type="button"
@@ -232,7 +263,7 @@ onBeforeUnmount(() => {
             :class="isServicesActive() ? 'text-white' : 'text-white/70 hover:text-white'"
             :aria-expanded="servicesOpen"
             aria-haspopup="true"
-            @click="servicesOpen = !servicesOpen"
+            @click="toggleServices"
           >
             Services
             <svg
@@ -253,7 +284,7 @@ onBeforeUnmount(() => {
                   :key="service.slug"
                   :to="{ name: 'service', params: { slug: service.slug } }"
                   class="group flex flex-col gap-3 border-b border-white/10 p-6 text-left transition-colors last:border-b-0 sm:border-b-0 sm:odd:border-r sm:[&:nth-child(-n+2)]:border-b"
-                  @click="servicesOpen = false"
+                  @click="closeServices({ immediate: true })"
                 >
                   <span class="text-lg text-brand-accent transition-transform group-hover:rotate-90">+</span>
                   <span class="font-heading text-base font-medium text-white">{{ service.title }}</span>
@@ -385,14 +416,37 @@ onBeforeUnmount(() => {
   mask: url('/logo-mark.png') center / contain no-repeat;
 }
 
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+/* Opening and closing are tuned separately. A menu that fades in over 0.18s
+   with a plain `ease` reads as a hard cut — the eye needs a little longer,
+   and a decelerating curve, to register something as having moved rather than
+   appeared. Closing stays quick: once the user has decided to leave, matching
+   the opening duration just feels like the panel is in the way.
+
+   The panel also grows from `top center` instead of arriving fully formed,
+   which is what ties it visually to the button it belongs to. `translate(-50%)`
+   has to be repeated in every transform because it is what centres the panel
+   under that button, not part of the animation. */
+.dropdown-enter-active {
+  transition:
+    opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top center;
+  will-change: opacity, transform;
 }
-.dropdown-enter-from,
+.dropdown-leave-active {
+  transition:
+    opacity 0.15s ease-in,
+    transform 0.15s ease-in;
+  transform-origin: top center;
+  will-change: opacity, transform;
+}
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translate(-50%, -10px) scale(0.97);
+}
 .dropdown-leave-to {
   opacity: 0;
-  transform: translate(-50%, -6px);
+  transform: translate(-50%, -6px) scale(0.99);
 }
 
 @media (prefers-reduced-motion: reduce) {

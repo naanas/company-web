@@ -2,21 +2,13 @@
 import { reactive, ref, useTemplateRef } from 'vue'
 import { useScrollReveal } from '../composables/useScrollReveal'
 import { useBlurTextReveal } from '../composables/useBlurTextReveal'
-import { useInteractiveLineField } from '../composables/useInteractiveLineField'
 import { useStripeReveal } from '../composables/useStripeReveal'
 
 const sectionRef = useTemplateRef('section')
 const headingRef = useTemplateRef('heading')
-const lineFieldContainerRef = useTemplateRef('lineFieldContainer')
-const lineFieldCanvasRef = useTemplateRef('lineFieldCanvas')
 useScrollReveal(sectionRef)
 useBlurTextReveal(headingRef, { start: 'top 90%' })
 useStripeReveal(sectionRef)
-
-// Circuit-trace field behind the contact content — bends toward the cursor
-// on its own, and streams a signal pulse for as long as "Hold to Signal" is
-// held. A playful nod to "reaching out" that fits an IT/software brief.
-const { startPulse, stopPulse } = useInteractiveLineField(lineFieldCanvasRef, lineFieldContainerRef)
 
 const form = reactive({
   name: '',
@@ -91,16 +83,16 @@ const visibleSocials = socials.filter((s) => s.href)
       class="pointer-events-none absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-brand-accent/10 blur-[120px]"
     />
 
-    <div ref="lineFieldContainer" class="pointer-events-none absolute inset-0 z-0">
-      <canvas ref="lineFieldCanvas" class="h-full w-full" />
-    </div>
-
     <div class="relative z-10 mx-auto max-w-6xl">
-      <div class="flex flex-col gap-10 border-b border-white/10 pb-16 lg:flex-row lg:items-end lg:justify-between">
-        <h2 ref="heading" class="text-display-lg max-w-2xl text-white">
+      <!-- Side by side only from `xl`. At `lg` the heading and the link had to
+           share about 976px, which is not enough for both once the heading is
+           at display size — they collided. Below that they stack, where no
+           collision is possible. -->
+      <div class="flex flex-col gap-10 border-b border-white/10 pb-16 xl:flex-row xl:items-end xl:justify-between">
+        <h2 ref="heading" class="text-display-lg max-w-4xl text-white">
           Ready to Build<br />Something Meaningful?
         </h2>
-        <div class="flex flex-col items-start gap-4 lg:items-end">
+        <div class="flex flex-col items-start gap-4 xl:items-end">
           <a
             data-reveal
             href="#contact-form"
@@ -109,18 +101,9 @@ const visibleSocials = socials.filter((s) => s.href)
             Start a Collaboration
             <span class="transition-transform group-hover:translate-x-1">→</span>
           </a>
-          <button
-            type="button"
-            class="group flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-white/30 transition hover:text-brand-accent"
-            aria-label="Hold to send a signal through the trace field"
-            @pointerdown="startPulse"
-            @pointerup="stopPulse"
-            @pointerleave="stopPulse"
-            @pointercancel="stopPulse"
-          >
-            <span class="h-1.5 w-1.5 rounded-full bg-brand-accent/60 transition group-hover:bg-brand-accent group-hover:shadow-[0_0_10px_rgba(34,211,238,0.7)]" />
-            Hold to Signal
-          </button>
+          <!-- The "Hold to Signal" button went with the trace field: holding
+               it drove the pulse through those lines and did nothing else, so
+               without them it was a control with no effect. -->
         </div>
       </div>
 
