@@ -18,6 +18,11 @@
     <meta name="author" content="PT Veltera Digital Technologies" />
     <meta name="robots" content="index, follow" />
 
+    <!-- Google Search Console ownership proof. Must stay in the head of the
+         served index.html — Search Console re-checks it periodically, not just
+         once, so removing it later un-verifies the property. -->
+    <meta name="google-site-verification" content="RyGg57AdUFOHcvVIY-LWGTKAQneJa3hg-ZNjJpiMKBE" />
+
     <!-- These three are the defaults for a cold load of "/". Every navigation
          rewrites title, description and canonical for the route it lands on
          (see src/seo.js) — without that, /pricing and each /services/:slug
