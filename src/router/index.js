@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import { applyRouteMeta } from '../seo'
 
 // Matches the offset useSmoothAnchorScroll applies to same-page anchors, so
 // a section lands in the same place whether it was reached from this page or
@@ -35,6 +36,15 @@ const router = createRouter({
     if (to.hash) return { el: to.hash, top: NAV_OFFSET }
     return { top: 0 }
   },
+})
+
+// Search engines read the head of whatever the page settles on, so this has
+// to run on every navigation — not just the first load. Without it each route
+// kept index.html's single title, description and canonical, and that fixed
+// canonical pointed every page at "/", telling Google the pricing and service
+// pages were duplicates of the home page.
+router.afterEach((to) => {
+  applyRouteMeta(to)
 })
 
 export default router

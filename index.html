@@ -16,6 +16,13 @@
       content="VELTECH (PT Veltera Digital Technologies) builds SaaS solutions that turn manual operational processes in the industrial sector into integrated, efficient, and scale-ready digital systems."
     />
     <meta name="author" content="PT Veltera Digital Technologies" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- These three are the defaults for a cold load of "/". Every navigation
+         rewrites title, description and canonical for the route it lands on
+         (see src/seo.js) — without that, /pricing and each /services/:slug
+         inherited this canonical and told search engines they were duplicates
+         of the home page. -->
     <link rel="canonical" href="https://veltera.cloud/" />
 
     <!-- Open Graph -->
@@ -37,6 +44,25 @@
       content="Custom SaaS solutions for operational process digitization, monitoring, and industrial system integration."
     />
     <meta name="twitter:image" content="https://veltera.cloud/og-image.jpg" />
+
+    <!-- Structured data. Deliberately limited to facts this repo can stand
+         behind: name, legal name, URL, logo, description. Address, telephone
+         and social profiles are omitted rather than guessed — the contact
+         details in the app are still placeholders, and publishing invented
+         business identity to search engines is worse than publishing none.
+         Add `address`, `telephone` and `sameAs` here once they are real. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "VELTECH",
+        "legalName": "PT Veltera Digital Technologies",
+        "url": "https://veltera.cloud/",
+        "logo": "https://veltera.cloud/favicon.png",
+        "image": "https://veltera.cloud/og-image.jpg",
+        "description": "IT consulting and software house building custom systems, ERP, web and mobile applications, and data platforms."
+      }
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

@@ -53,6 +53,33 @@ curl -s https://veltera.cloud/ | grep -o 'assets/index-[^"]*\.js'   # what is li
 Different hashes mean the browser or the server is holding an old
 `index.html` — hard-reload the page, and check the cache headers above.
 
+## Getting indexed by Google
+
+The technical side is in place: `robots.txt`, a `sitemap.xml` generated at
+build time from the route list, per-route `<title>`/description/canonical
+(`src/seo.js`, applied in the router's `afterEach`), and Organization
+structured data in `index.html`.
+
+The rest needs a Google account and cannot be done from the repo:
+
+1. Add the property at [search.google.com/search-console](https://search.google.com/search-console)
+   and verify ownership — the DNS TXT record method is easiest on a VPS.
+2. Submit `https://veltera.cloud/sitemap.xml` under Sitemaps.
+3. Use URL Inspection → "Request indexing" on the home page to get a first
+   crawl rather than waiting to be discovered.
+
+Expect days to weeks before anything appears, and longer to rank for anything
+competitive. Searching `site:veltera.cloud` shows what is currently indexed.
+
+Two things worth knowing about this site specifically:
+
+- It is a client-rendered SPA. Google executes JavaScript, but it does so on a
+  second pass that can lag the initial crawl. If indexing turns out to be slow
+  or partial, pre-rendering the six routes to static HTML at build time is the
+  fix, and the route list in `src/seo.js` already enumerates them.
+- Nothing here can promise a ranking. Being indexed means being *findable*;
+  ranking depends on content, links, and competition.
+
 ## Still to fill in before launch
 
 - Real business email and phone in `src/components/ContactSection.vue` — the

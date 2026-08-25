@@ -1,0 +1,8 @@
+# Everything here is public marketing content — nothing to hold back.
+User-agent: *
+Allow: /
+
+# Crawlers look here first to discover every page in one request rather than
+# following links. Generated at build time from the route list, so adding a
+# service to src/data/services.js keeps it in sync automatically.
+Sitemap: https://veltera.cloud/sitemap.xml
