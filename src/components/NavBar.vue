@@ -15,9 +15,15 @@ const isOpen = ref(false)
 const activeHref = ref('#hero')
 const headerRef = useTemplateRef('header')
 const servicesDropdownRef = useTemplateRef('servicesDropdown')
+const servicesPanelRef = useTemplateRef('servicesPanel')
 
 const servicesOpen = ref(false)
 const mobileServicesOpen = ref(false)
+const serviceItemRefs = ref([])
+
+function setServiceItemRef(el, index) {
+  if (el) serviceItemRefs.value[index] = el
+}
 
 // Plain same-page anchors. These only resolve to something when the home
 // page's sections actually exist in the DOM, so on any other route they
@@ -40,6 +46,7 @@ const isServicesActive = () => route.path.startsWith('/services') || activeHref.
 let sectionTriggers = []
 let matchMedia = null
 let isHidden = false
+let dropdownTl = null
 
 // Single owner of the shown/hidden state, so the scroll direction and the
 // pointer-near-top rescue below can't fight each other into a half-faded bar.
@@ -181,19 +188,112 @@ watch(
 const SERVICES_CLOSE_DELAY = 140
 let servicesCloseTimer = null
 
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+function animateDropdownIn() {
+  const panel = servicesPanelRef.value
+  if (!panel) return
+
+  dropdownTl?.kill()
+
+  const items = serviceItemRefs.value.filter(Boolean)
+
+  gsap.set(panel, {
+    autoAlpha: 0,
+    y: -12,
+    scaleY: 0.96,
+    transformOrigin: 'top center',
+  })
+  gsap.set(items, {
+    autoAlpha: 0,
+    y: 10,
+    filter: 'blur(4px)',
+  })
+
+  dropdownTl = gsap
+    .timeline()
+    .to(panel, {
+      autoAlpha: 1,
+      y: 0,
+      scaleY: 1,
+      duration: 0.35,
+      ease: 'power3.out',
+    })
+    .to(
+      items,
+      {
+        autoAlpha: 1,
+        y: 0,
+        filter: 'blur(0px)',
+        duration: 0.3,
+        stagger: 0.05,
+        ease: 'power2.out',
+      },
+      '-=0.2'
+    )
+}
+
+function animateDropdownOut(onComplete) {
+  const panel = servicesPanelRef.value
+  if (!panel) {
+    onComplete?.()
+    return
+  }
+
+  const items = serviceItemRefs.value.filter(Boolean)
+
+  dropdownTl?.kill()
+  dropdownTl = gsap
+    .timeline({ onComplete })
+    .to(items, {
+      autoAlpha: 0,
+      y: -6,
+      duration: 0.12,
+      stagger: 0.02,
+      ease: 'power2.in',
+    })
+    .to(
+      panel,
+      {
+        autoAlpha: 0,
+        y: -8,
+        scaleY: 0.98,
+        duration: 0.15,
+        ease: 'power2.in',
+      },
+      '-=0.08'
+    )
+}
+
 function openServices() {
   clearTimeout(servicesCloseTimer)
-  servicesOpen.value = true
+  if (!servicesOpen.value) {
+    servicesOpen.value = true
+    if (!prefersReducedMotion()) {
+      nextTick(animateDropdownIn)
+    }
+  } else {
+    dropdownTl?.kill()
+    if (!prefersReducedMotion()) {
+      animateDropdownIn()
+    }
+  }
 }
 
 function closeServices({ immediate = false } = {}) {
   clearTimeout(servicesCloseTimer)
-  if (immediate) {
+  if (immediate || prefersReducedMotion()) {
+    dropdownTl?.kill()
     servicesOpen.value = false
     return
   }
+  if (!servicesOpen.value) return
   servicesCloseTimer = setTimeout(() => {
-    servicesOpen.value = false
+    animateDropdownOut(() => {
+      servicesOpen.value = false
+    })
   }, SERVICES_CLOSE_DELAY)
 }
 
@@ -215,6 +315,7 @@ document.addEventListener('keydown', onDocumentKeydown)
 
 onBeforeUnmount(() => {
   clearTimeout(servicesCloseTimer)
+  dropdownTl?.kill()
   // Reverting the matchMedia context kills the ScrollTrigger it created and
   // runs the cleanup that removes the pointer listener.
   matchMedia?.revert()
@@ -276,23 +377,25 @@ onBeforeUnmount(() => {
             </svg>
           </button>
 
-          <Transition name="dropdown">
-            <div v-if="servicesOpen" class="absolute left-1/2 top-full w-[36rem] max-w-[90vw] -translate-x-1/2 pt-3">
-              <div class="grid overflow-hidden rounded-3xl border border-white/10 bg-brand-950/95 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] backdrop-blur-md sm:grid-cols-2">
-                <RouterLink
-                  v-for="service in services"
-                  :key="service.slug"
-                  :to="{ name: 'service', params: { slug: service.slug } }"
-                  class="group flex flex-col gap-3 border-b border-white/10 p-6 text-left transition-colors last:border-b-0 sm:border-b-0 sm:odd:border-r sm:[&:nth-child(-n+2)]:border-b"
-                  @click="closeServices({ immediate: true })"
-                >
-                  <span class="text-lg text-brand-accent transition-transform group-hover:rotate-90">+</span>
-                  <span class="font-heading text-base font-medium text-white">{{ service.title }}</span>
-                  <span class="text-xs leading-relaxed text-slate-400">{{ service.summary }}</span>
-                </RouterLink>
-              </div>
+          <div v-if="servicesOpen" class="absolute left-1/2 top-full w-[36rem] max-w-[90vw] -translate-x-1/2 pt-3">
+            <div
+              ref="servicesPanel"
+              class="grid overflow-hidden rounded-3xl border border-white/10 bg-brand-950/95 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] backdrop-blur-md sm:grid-cols-2"
+            >
+              <RouterLink
+                v-for="(service, index) in services"
+                :key="service.slug"
+                :ref="(el) => setServiceItemRef(el, index)"
+                :to="{ name: 'service', params: { slug: service.slug } }"
+                class="group flex flex-col gap-3 border-b border-white/10 p-6 text-left transition-colors last:border-b-0 sm:border-b-0 sm:odd:border-r sm:[&:nth-child(-n+2)]:border-b"
+                @click="closeServices({ immediate: true })"
+              >
+                <span class="text-lg text-brand-accent transition-transform group-hover:rotate-90">+</span>
+                <span class="font-heading text-base font-medium text-white">{{ service.title }}</span>
+                <span class="text-xs leading-relaxed text-slate-400">{{ service.summary }}</span>
+              </RouterLink>
             </div>
-          </Transition>
+          </div>
         </li>
 
         <!-- Pricing is a route of its own, not a home-page section, so it
@@ -416,43 +519,8 @@ onBeforeUnmount(() => {
   mask: url('/logo-mark.png') center / contain no-repeat;
 }
 
-/* Opening and closing are tuned separately. A menu that fades in over 0.18s
-   with a plain `ease` reads as a hard cut — the eye needs a little longer,
-   and a decelerating curve, to register something as having moved rather than
-   appeared. Closing stays quick: once the user has decided to leave, matching
-   the opening duration just feels like the panel is in the way.
-
-   The panel also grows from `top center` instead of arriving fully formed,
-   which is what ties it visually to the button it belongs to. `translate(-50%)`
-   has to be repeated in every transform because it is what centres the panel
-   under that button, not part of the animation. */
-.dropdown-enter-active {
-  transition:
-    opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-  transform-origin: top center;
-  will-change: opacity, transform;
-}
-.dropdown-leave-active {
-  transition:
-    opacity 0.15s ease-in,
-    transform 0.15s ease-in;
-  transform-origin: top center;
-  will-change: opacity, transform;
-}
-.dropdown-enter-from {
-  opacity: 0;
-  transform: translate(-50%, -10px) scale(0.97);
-}
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translate(-50%, -6px) scale(0.99);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dropdown-enter-active,
-  .dropdown-leave-active {
-    transition: none;
-  }
-}
+/* The service dropdown is animated with GSAP rather than a Vue Transition so
+   the panel and its items can be choreographed: the container scales down from
+   the top while the four service links fade, slide up, and lose a slight blur
+   in a staggered sequence. Reduced-motion users get an instant show/hide. */
 </style>

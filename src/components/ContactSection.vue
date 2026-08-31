@@ -23,7 +23,7 @@ const handedOff = ref(false)
 // Placeholder business contact — replace with real details.
 const contact = {
   email: 'hello@veltech.co.id',
-  phone: '+62 8XX-XXXX-XXXX',
+  phone: '+62 857-4964-8941',
 }
 
 // There is no backend behind this form. It previously pretended otherwise:
