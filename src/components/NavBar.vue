@@ -377,7 +377,7 @@ onBeforeUnmount(() => {
             </svg>
           </button>
 
-          <div v-if="servicesOpen" class="absolute left-1/2 top-full w-[36rem] max-w-[90vw] -translate-x-1/2 pt-3">
+          <div v-if="servicesOpen" class="absolute left-1/2 top-full w-xl max-w-[90vw] -translate-x-1/2 pt-3">
             <div
               ref="servicesPanel"
               class="grid overflow-hidden rounded-3xl border border-white/10 bg-brand-950/95 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)] backdrop-blur-md sm:grid-cols-2"
@@ -387,7 +387,7 @@ onBeforeUnmount(() => {
                 :key="service.slug"
                 :ref="(el) => setServiceItemRef(el, index)"
                 :to="{ name: 'service', params: { slug: service.slug } }"
-                class="group flex flex-col gap-3 border-b border-white/10 p-6 text-left transition-colors last:border-b-0 sm:border-b-0 sm:odd:border-r sm:[&:nth-child(-n+2)]:border-b"
+                class="group flex flex-col gap-3 border-b border-white/10 p-6 text-left transition-colors last:border-b-0 sm:border-b-0 sm:odd:border-r sm:nth-[-n+2]:border-b"
                 @click="closeServices({ immediate: true })"
               >
                 <span class="text-lg text-brand-accent transition-transform group-hover:rotate-90">+</span>
